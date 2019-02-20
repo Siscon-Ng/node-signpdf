@@ -103,6 +103,7 @@ describe('Test signing', () => {
         const p12Buffer = fs.readFileSync(`${__dirname}/../certificate.p12`);
 
         pdfBuffer = signer.sign(pdfBuffer, p12Buffer);
+        fs.createWriteStream(`${__dirname}/test.pdf`).end(pdfBuffer);
         expect(pdfBuffer instanceof Buffer).toBe(true);
 
         const {signature, signedData} = extractSignature(pdfBuffer);
