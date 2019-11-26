@@ -5,3 +5,5 @@ export declare class SignPdf {
     private byteRangePlaceholder;
     sign(pdfBuffer: Buffer, p12Buffer: Buffer, additionalOptions?: {}): Buffer;
 }
+declare const _default: SignPdf;
+export default _default;

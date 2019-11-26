@@ -183,3 +183,5 @@ export class SignPdf {
         return pdf;
     }
 }
+
+export default new SignPdf();
