@@ -18,6 +18,6 @@ export function getSignatureInfo(buffer: Buffer, password?: string) {
     const cert = certBags.localKeyId[0].cert;
     return cert?.subject.getField('CN').value;
   } catch (e) {
-    throw new SignPdfError(e.message, ERROR_VERIFY_SIGNATURE)
+    throw new SignPdfError(e.message, ERROR_VERIFY_SIGNATURE);
   }
 }

@@ -19,5 +19,5 @@ describe('pdflib add placeholder', () => {
       expect(e instanceof SignPdfError).toBe(true);
       expect(e.type).toBe(ERROR_TYPE_PARSE);
     }
-  })
+  });
 });

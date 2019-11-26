@@ -188,9 +188,9 @@ describe('Test signing', () => {
           infoSignature,
           signatureLength: p12Buffer.length
         });
-        pdfBuffer = signer.sign(pdfBuffer, p12Buffer, { passphrase: 'node-signpdf' })
+        pdfBuffer = signer.sign(pdfBuffer, p12Buffer, { passphrase: 'node-signpdf' });
         // fs.writeFileSync(`${__dirname}/../resources/pdflibPlaceholder.pdf`, pdfBuffer)
-        expect(pdfBuffer instanceof Buffer).toBe(true)
+        expect(pdfBuffer instanceof Buffer).toBe(true);
     });
     it('signs with ca, intermediate and multiple certificates bundle', async () => {
         let pdfBuffer = await createPdf();
