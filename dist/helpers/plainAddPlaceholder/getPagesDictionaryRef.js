@@ -1,24 +1,16 @@
 "use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = getPagesDictionaryRef;
-
-var _SignPdfError = _interopRequireDefault(require("../../SignPdfError"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
+Object.defineProperty(exports, "__esModule", { value: true });
+const SignPdfError_1 = require("../../SignPdfError");
 /**
  * @param {Object} info As extracted from readRef()
  */
 function getPagesDictionaryRef(info) {
-  const pagesRefRegex = new RegExp('\\/Type\\s*\\/Catalog\\s*\\/Pages\\s+(\\d+\\s\\d+\\sR)', 'g');
-  const match = pagesRefRegex.exec(info.root);
-
-  if (match === null) {
-    throw new _SignPdfError.default('Failed to find the pages descriptor. This is probably a problem in node-signpdf.', _SignPdfError.default.TYPE_PARSE);
-  }
-
-  return match[1];
+    const pagesRefRegex = new RegExp('\\/Type\\s*\\/Catalog\\s*\\/Pages\\s+(\\d+\\s\\d+\\sR)', 'g');
+    const match = pagesRefRegex.exec(info.root);
+    if (match === null) {
+        throw new SignPdfError_1.SignPdfError('Failed to find the pages descriptor. This is probably a problem in node-signpdf.', SignPdfError_1.ERROR_TYPE_PARSE);
+    }
+    return match[1];
 }
+exports.getPagesDictionaryRef = getPagesDictionaryRef;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZ2V0UGFnZXNEaWN0aW9uYXJ5UmVmLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vc3JjL2hlbHBlcnMvcGxhaW5BZGRQbGFjZWhvbGRlci9nZXRQYWdlc0RpY3Rpb25hcnlSZWYudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7QUFBQSxxREFBb0U7QUFFcEU7O0dBRUc7QUFFSCxTQUFnQixxQkFBcUIsQ0FBQyxJQUFzQjtJQUN4RCxNQUFNLGFBQWEsR0FBRyxJQUFJLE1BQU0sQ0FBQyx3REFBd0QsRUFBRSxHQUFHLENBQUMsQ0FBQztJQUNoRyxNQUFNLEtBQUssR0FBRyxhQUFhLENBQUMsSUFBSSxDQUFDLElBQUksQ0FBQyxJQUFJLENBQUMsQ0FBQztJQUM1QyxJQUFJLEtBQUssS0FBSyxJQUFJLEVBQUU7UUFDaEIsTUFBTSxJQUFJLDJCQUFZLENBQ2xCLGtGQUFrRixFQUNsRiwrQkFBZ0IsQ0FDbkIsQ0FBQztLQUNMO0lBRUQsT0FBTyxLQUFLLENBQUMsQ0FBQyxDQUFDLENBQUM7QUFDcEIsQ0FBQztBQVhELHNEQVdDIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgRVJST1JfVFlQRV9QQVJTRSwgU2lnblBkZkVycm9yIH0gZnJvbSAnLi4vLi4vU2lnblBkZkVycm9yJztcblxuLyoqXG4gKiBAcGFyYW0ge09iamVjdH0gaW5mbyBBcyBleHRyYWN0ZWQgZnJvbSByZWFkUmVmKClcbiAqL1xuXG5leHBvcnQgZnVuY3Rpb24gZ2V0UGFnZXNEaWN0aW9uYXJ5UmVmKGluZm86IHsgcm9vdDogc3RyaW5nIH0pIHtcbiAgICBjb25zdCBwYWdlc1JlZlJlZ2V4ID0gbmV3IFJlZ0V4cCgnXFxcXC9UeXBlXFxcXHMqXFxcXC9DYXRhbG9nXFxcXHMqXFxcXC9QYWdlc1xcXFxzKyhcXFxcZCtcXFxcc1xcXFxkK1xcXFxzUiknLCAnZycpO1xuICAgIGNvbnN0IG1hdGNoID0gcGFnZXNSZWZSZWdleC5leGVjKGluZm8ucm9vdCk7XG4gICAgaWYgKG1hdGNoID09PSBudWxsKSB7XG4gICAgICAgIHRocm93IG5ldyBTaWduUGRmRXJyb3IoXG4gICAgICAgICAgICAnRmFpbGVkIHRvIGZpbmQgdGhlIHBhZ2VzIGRlc2NyaXB0b3IuIFRoaXMgaXMgcHJvYmFibHkgYSBwcm9ibGVtIGluIG5vZGUtc2lnbnBkZi4nLFxuICAgICAgICAgICAgRVJST1JfVFlQRV9QQVJTRSxcbiAgICAgICAgKTtcbiAgICB9XG5cbiAgICByZXR1cm4gbWF0Y2hbMV07XG59XG4iXX0=

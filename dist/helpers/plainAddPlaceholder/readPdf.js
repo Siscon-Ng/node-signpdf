@@ -1,18 +1,7 @@
 "use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _SignPdfError = _interopRequireDefault(require("../../SignPdfError"));
-
-var _readRefTable = _interopRequireDefault(require("./readRefTable"));
-
-var _findObject = _interopRequireDefault(require("./findObject"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
+Object.defineProperty(exports, "__esModule", { value: true });
+const readRefTable_1 = require("./readRefTable");
+const findObject_1 = require("./findObject");
 /**
  * Simplified parsing of a PDF Buffer.
  * Extracts reference table, root info and trailer start.
@@ -21,28 +10,25 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  *
  * @param {Buffer} pdfBuffer
  */
-const readPdf = pdfBuffer => {
-  // Extract the trailer dictionary.
-  const trailerStart = pdfBuffer.lastIndexOf('trailer'); // The trailer is followed by xref. Then an EOF. EOF's length is 6 characters.
-
-  const trailer = pdfBuffer.slice(trailerStart, pdfBuffer.length - 6);
-  let xRefPosition = trailer.slice(trailer.lastIndexOf('startxref') + 10).toString();
-  xRefPosition = parseInt(xRefPosition);
-  const refTable = (0, _readRefTable.default)(pdfBuffer);
-  let rootSlice = trailer.slice(trailer.indexOf('/Root'));
-  rootSlice = rootSlice.slice(0, rootSlice.indexOf('/', 1));
-  const rootRef = rootSlice.slice(6).toString().trim(); // /Root + at least one space
-
-  const root = (0, _findObject.default)(pdfBuffer, refTable, rootRef).toString();
-  return {
-    xref: refTable,
-    rootRef,
-    root,
-    trailerStart,
-    previousXrefs: [],
-    xRefPosition
-  };
-};
-
-var _default = readPdf;
-exports.default = _default;
+function readPdf(pdfBuffer) {
+    // Extract the trailer dictionary.
+    const trailerStart = pdfBuffer.lastIndexOf('trailer');
+    // The trailer is followed by xref. Then an EOF. EOF's length is 6 characters.
+    const trailer = pdfBuffer.slice(trailerStart, pdfBuffer.length - 6);
+    let xRefPosition = trailer.slice(trailer.lastIndexOf('startxref') + 10).toString();
+    const refTable = readRefTable_1.readRefTable(pdfBuffer);
+    let rootSlice = trailer.slice(trailer.indexOf('/Root'));
+    rootSlice = rootSlice.slice(0, rootSlice.indexOf('/', 1));
+    const rootRef = rootSlice.slice(6).toString().trim(); // /Root + at least one space
+    const root = findObject_1.findObject(pdfBuffer, refTable, rootRef).toString();
+    return {
+        xref: refTable,
+        rootRef,
+        root,
+        trailerStart,
+        previousXrefs: [],
+        xRefPosition: parseInt(xRefPosition),
+    };
+}
+exports.readPdf = readPdf;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicmVhZFBkZi5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9oZWxwZXJzL3BsYWluQWRkUGxhY2Vob2xkZXIvcmVhZFBkZi50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOztBQUFBLGlEQUF3RDtBQUN4RCw2Q0FBMEM7QUFXMUM7Ozs7Ozs7R0FPRztBQUNILFNBQWdCLE9BQU8sQ0FBQyxTQUFpQjtJQUNyQyxrQ0FBa0M7SUFDbEMsTUFBTSxZQUFZLEdBQUcsU0FBUyxDQUFDLFdBQVcsQ0FBQyxTQUFTLENBQUMsQ0FBQztJQUN0RCw4RUFBOEU7SUFDOUUsTUFBTSxPQUFPLEdBQUcsU0FBUyxDQUFDLEtBQUssQ0FBQyxZQUFZLEVBQUUsU0FBUyxDQUFDLE1BQU0sR0FBRyxDQUFDLENBQUMsQ0FBQztJQUVwRSxJQUFJLFlBQVksR0FBRyxPQUFPLENBQUMsS0FBSyxDQUFDLE9BQU8sQ0FBQyxXQUFXLENBQUMsV0FBVyxDQUFDLEdBQUcsRUFBRSxDQUFDLENBQUMsUUFBUSxFQUFFLENBQUM7SUFFbkYsTUFBTSxRQUFRLEdBQUcsMkJBQVksQ0FBQyxTQUFTLENBQUMsQ0FBQztJQUV6QyxJQUFJLFNBQVMsR0FBRyxPQUFPLENBQUMsS0FBSyxDQUFDLE9BQU8sQ0FBQyxPQUFPLENBQUMsT0FBTyxDQUFDLENBQUMsQ0FBQztJQUN4RCxTQUFTLEdBQUcsU0FBUyxDQUFDLEtBQUssQ0FBQyxDQUFDLEVBQUUsU0FBUyxDQUFDLE9BQU8sQ0FBQyxHQUFHLEVBQUUsQ0FBQyxDQUFDLENBQUMsQ0FBQztJQUMxRCxNQUFNLE9BQU8sR0FBRyxTQUFTLENBQUMsS0FBSyxDQUFDLENBQUMsQ0FBQyxDQUFDLFFBQVEsRUFBRSxDQUFDLElBQUksRUFBRSxDQUFDLENBQUMsNkJBQTZCO0lBQ25GLE1BQU0sSUFBSSxHQUFHLHVCQUFVLENBQUMsU0FBUyxFQUFFLFFBQVEsRUFBRSxPQUFPLENBQUMsQ0FBQyxRQUFRLEVBQUUsQ0FBQztJQUVqRSxPQUFPO1FBQ0gsSUFBSSxFQUFFLFFBQVE7UUFDZCxPQUFPO1FBQ1AsSUFBSTtRQUNKLFlBQVk7UUFDWixhQUFhLEVBQUUsRUFBRTtRQUNqQixZQUFZLEVBQUUsUUFBUSxDQUFDLFlBQVksQ0FBQztLQUN2QyxDQUFDO0FBQ04sQ0FBQztBQXZCRCwwQkF1QkMiLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyByZWFkUmVmVGFibGUsIFJlZlRhYmxlIH0gZnJvbSAnLi9yZWFkUmVmVGFibGUnO1xuaW1wb3J0IHsgZmluZE9iamVjdCB9IGZyb20gJy4vZmluZE9iamVjdCc7XG5cbmV4cG9ydCBpbnRlcmZhY2UgUGRmSW5mbyB7XG4gICAgeHJlZjogUmVmVGFibGU7XG4gICAgcm9vdFJlZjogc3RyaW5nO1xuICAgIHJvb3Q6IHN0cmluZztcbiAgICB0cmFpbGVyU3RhcnQ6IG51bWJlcjtcbiAgICBwcmV2aW91c1hyZWZzOiBhbnlbXTtcbiAgICB4UmVmUG9zaXRpb246IG51bWJlcjtcbn1cblxuLyoqXG4gKiBTaW1wbGlmaWVkIHBhcnNpbmcgb2YgYSBQREYgQnVmZmVyLlxuICogRXh0cmFjdHMgcmVmZXJlbmNlIHRhYmxlLCByb290IGluZm8gYW5kIHRyYWlsZXIgc3RhcnQuXG4gKlxuICogU2VlIHNlY3Rpb24gNy41LjUgKEZpbGUgVHJhaWxlcikgb2YgdGhlIFBERiBzcGVjcy5cbiAqXG4gKiBAcGFyYW0ge0J1ZmZlcn0gcGRmQnVmZmVyXG4gKi9cbmV4cG9ydCBmdW5jdGlvbiByZWFkUGRmKHBkZkJ1ZmZlcjogQnVmZmVyKTogUGRmSW5mbyB7XG4gICAgLy8gRXh0cmFjdCB0aGUgdHJhaWxlciBkaWN0aW9uYXJ5LlxuICAgIGNvbnN0IHRyYWlsZXJTdGFydCA9IHBkZkJ1ZmZlci5sYXN0SW5kZXhPZigndHJhaWxlcicpO1xuICAgIC8vIFRoZSB0cmFpbGVyIGlzIGZvbGxvd2VkIGJ5IHhyZWYuIFRoZW4gYW4gRU9GLiBFT0YncyBsZW5ndGggaXMgNiBjaGFyYWN0ZXJzLlxuICAgIGNvbnN0IHRyYWlsZXIgPSBwZGZCdWZmZXIuc2xpY2UodHJhaWxlclN0YXJ0LCBwZGZCdWZmZXIubGVuZ3RoIC0gNik7XG5cbiAgICBsZXQgeFJlZlBvc2l0aW9uID0gdHJhaWxlci5zbGljZSh0cmFpbGVyLmxhc3RJbmRleE9mKCdzdGFydHhyZWYnKSArIDEwKS50b1N0cmluZygpO1xuXG4gICAgY29uc3QgcmVmVGFibGUgPSByZWFkUmVmVGFibGUocGRmQnVmZmVyKTtcblxuICAgIGxldCByb290U2xpY2UgPSB0cmFpbGVyLnNsaWNlKHRyYWlsZXIuaW5kZXhPZignL1Jvb3QnKSk7XG4gICAgcm9vdFNsaWNlID0gcm9vdFNsaWNlLnNsaWNlKDAsIHJvb3RTbGljZS5pbmRleE9mKCcvJywgMSkpO1xuICAgIGNvbnN0IHJvb3RSZWYgPSByb290U2xpY2Uuc2xpY2UoNikudG9TdHJpbmcoKS50cmltKCk7IC8vIC9Sb290ICsgYXQgbGVhc3Qgb25lIHNwYWNlXG4gICAgY29uc3Qgcm9vdCA9IGZpbmRPYmplY3QocGRmQnVmZmVyLCByZWZUYWJsZSwgcm9vdFJlZikudG9TdHJpbmcoKTtcblxuICAgIHJldHVybiB7XG4gICAgICAgIHhyZWY6IHJlZlRhYmxlLFxuICAgICAgICByb290UmVmLFxuICAgICAgICByb290LFxuICAgICAgICB0cmFpbGVyU3RhcnQsXG4gICAgICAgIHByZXZpb3VzWHJlZnM6IFtdLFxuICAgICAgICB4UmVmUG9zaXRpb246IHBhcnNlSW50KHhSZWZQb3NpdGlvbiksXG4gICAgfTtcbn1cbiJdfQ==

@@ -1,30 +1,15 @@
 "use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = exports.ERROR_VERIFY_SIGNATURE = exports.ERROR_TYPE_PARSE = exports.ERROR_TYPE_INPUT = exports.ERROR_TYPE_UNKNOWN = void 0;
-const ERROR_TYPE_UNKNOWN = 1;
-exports.ERROR_TYPE_UNKNOWN = ERROR_TYPE_UNKNOWN;
-const ERROR_TYPE_INPUT = 2;
-exports.ERROR_TYPE_INPUT = ERROR_TYPE_INPUT;
-const ERROR_TYPE_PARSE = 3;
-exports.ERROR_TYPE_PARSE = ERROR_TYPE_PARSE;
-const ERROR_VERIFY_SIGNATURE = 4;
-exports.ERROR_VERIFY_SIGNATURE = ERROR_VERIFY_SIGNATURE;
-
+Object.defineProperty(exports, "__esModule", { value: true });
+// TODO use enum?
+exports.ERROR_TYPE_UNKNOWN = 1;
+exports.ERROR_TYPE_INPUT = 2;
+exports.ERROR_TYPE_PARSE = 3;
+exports.ERROR_VERIFY_SIGNATURE = 4;
 class SignPdfError extends Error {
-  constructor(msg, type = ERROR_TYPE_UNKNOWN) {
-    super(msg);
-    this.type = type;
-  }
-
-} // Shorthand
-
-
-SignPdfError.TYPE_UNKNOWN = ERROR_TYPE_UNKNOWN;
-SignPdfError.TYPE_INPUT = ERROR_TYPE_INPUT;
-SignPdfError.TYPE_PARSE = ERROR_TYPE_PARSE;
-SignPdfError.VERIFY_SIGNATURE = ERROR_VERIFY_SIGNATURE;
-var _default = SignPdfError;
-exports.default = _default;
+    constructor(msg, type = exports.ERROR_TYPE_UNKNOWN) {
+        super(msg);
+        this.type = type;
+    }
+}
+exports.SignPdfError = SignPdfError;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiU2lnblBkZkVycm9yLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vc3JjL1NpZ25QZGZFcnJvci50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOztBQUFBLGlCQUFpQjtBQUNKLFFBQUEsa0JBQWtCLEdBQUcsQ0FBQyxDQUFDO0FBQ3ZCLFFBQUEsZ0JBQWdCLEdBQUcsQ0FBQyxDQUFDO0FBQ3JCLFFBQUEsZ0JBQWdCLEdBQUcsQ0FBQyxDQUFDO0FBQ3JCLFFBQUEsc0JBQXNCLEdBQUcsQ0FBQyxDQUFDO0FBRXhDLE1BQWEsWUFBYSxTQUFRLEtBQUs7SUFDbkMsWUFBWSxHQUFXLEVBQVMsT0FBTywwQkFBa0I7UUFDckQsS0FBSyxDQUFDLEdBQUcsQ0FBQyxDQUFDO1FBRGlCLFNBQUksR0FBSixJQUFJLENBQXFCO0lBRXpELENBQUM7Q0FDSjtBQUpELG9DQUlDIiwic291cmNlc0NvbnRlbnQiOlsiLy8gVE9ETyB1c2UgZW51bT9cbmV4cG9ydCBjb25zdCBFUlJPUl9UWVBFX1VOS05PV04gPSAxO1xuZXhwb3J0IGNvbnN0IEVSUk9SX1RZUEVfSU5QVVQgPSAyO1xuZXhwb3J0IGNvbnN0IEVSUk9SX1RZUEVfUEFSU0UgPSAzO1xuZXhwb3J0IGNvbnN0IEVSUk9SX1ZFUklGWV9TSUdOQVRVUkUgPSA0O1xuXG5leHBvcnQgY2xhc3MgU2lnblBkZkVycm9yIGV4dGVuZHMgRXJyb3Ige1xuICAgIGNvbnN0cnVjdG9yKG1zZzogc3RyaW5nLCBwdWJsaWMgdHlwZSA9IEVSUk9SX1RZUEVfVU5LTk9XTikge1xuICAgICAgICBzdXBlcihtc2cpO1xuICAgIH1cbn1cbiJdfQ==

@@ -1,26 +1,18 @@
 "use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
 /*
 PDFAbstractReference by Devon Govett used below.
 The class is part of pdfkit. See https://github.com/foliojs/pdfkit
 LICENSE: MIT. Included in this folder.
 Modifications may have been applied for the purposes of node-signpdf.
 */
-
+Object.defineProperty(exports, "__esModule", { value: true });
 /*
 PDFAbstractReference - abstract class for PDF reference
 */
 class PDFAbstractReference {
-  toString() {
-    throw new Error('Must be implemented by subclasses');
-  }
-
+    toString() {
+        throw new Error('Must be implemented by subclasses');
+    }
 }
-
-var _default = PDFAbstractReference;
-exports.default = _default;
+exports.default = PDFAbstractReference;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiYWJzdHJhY3RfcmVmZXJlbmNlLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vc3JjL2hlbHBlcnMvcGRma2l0L2Fic3RyYWN0X3JlZmVyZW5jZS50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiO0FBQUE7Ozs7O0VBS0U7O0FBRUY7O0VBRUU7QUFFRixNQUFNLG9CQUFvQjtJQUNmLFFBQVE7UUFDWCxNQUFNLElBQUksS0FBSyxDQUFDLG1DQUFtQyxDQUFDLENBQUM7SUFDekQsQ0FBQztDQUNKO0FBRUQsa0JBQWUsb0JBQW9CLENBQUMiLCJzb3VyY2VzQ29udGVudCI6WyIvKlxuUERGQWJzdHJhY3RSZWZlcmVuY2UgYnkgRGV2b24gR292ZXR0IHVzZWQgYmVsb3cuXG5UaGUgY2xhc3MgaXMgcGFydCBvZiBwZGZraXQuIFNlZSBodHRwczovL2dpdGh1Yi5jb20vZm9saW9qcy9wZGZraXRcbkxJQ0VOU0U6IE1JVC4gSW5jbHVkZWQgaW4gdGhpcyBmb2xkZXIuXG5Nb2RpZmljYXRpb25zIG1heSBoYXZlIGJlZW4gYXBwbGllZCBmb3IgdGhlIHB1cnBvc2VzIG9mIG5vZGUtc2lnbnBkZi5cbiovXG5cbi8qXG5QREZBYnN0cmFjdFJlZmVyZW5jZSAtIGFic3RyYWN0IGNsYXNzIGZvciBQREYgcmVmZXJlbmNlXG4qL1xuXG5jbGFzcyBQREZBYnN0cmFjdFJlZmVyZW5jZSB7XG4gICAgcHVibGljIHRvU3RyaW5nKCkge1xuICAgICAgICB0aHJvdyBuZXcgRXJyb3IoJ011c3QgYmUgaW1wbGVtZW50ZWQgYnkgc3ViY2xhc3NlcycpO1xuICAgIH1cbn1cblxuZXhwb3J0IGRlZmF1bHQgUERGQWJzdHJhY3RSZWZlcmVuY2U7XG4iXX0=

@@ -1,167 +1,139 @@
 "use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _abstract_reference = _interopRequireDefault(require("./abstract_reference"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
 /*
 PDFObject by Devon Govett used below.
 The class is part of pdfkit. See https://github.com/foliojs/pdfkit
 LICENSE: MIT. Included in this folder.
 Modifications may have been applied for the purposes of node-signpdf.
 */
-
+Object.defineProperty(exports, "__esModule", { value: true });
+const abstract_reference_1 = require("./abstract_reference");
 /*
 PDFObject - converts JavaScript types into their corresponding PDF types.
 By Devon Govett
 */
 const pad = (str, length) => (Array(length + 1).join('0') + str).slice(-length);
-
 const escapableRe = /[\n\r\t\b\f\(\)\\]/g;
 const escapable = {
-  '\n': '\\n',
-  '\r': '\\r',
-  '\t': '\\t',
-  '\b': '\\b',
-  '\f': '\\f',
-  '\\': '\\\\',
-  '(': '\\(',
-  ')': '\\)'
-}; // Convert little endian UTF-16 to big endian
-
-const swapBytes = buff => {
-  const l = buff.length;
-
-  if (l & 0x01) {
-    throw new Error('Buffer length must be even');
-  } else {
-    for (let i = 0, end = l - 1; i < end; i += 2) {
-      const a = buff[i];
-      buff[i] = buff[i + 1];
-      buff[i + 1] = a;
-    }
-  }
-
-  return buff;
+    '\n': '\\n',
+    '\r': '\\r',
+    '\t': '\\t',
+    '\b': '\\b',
+    '\f': '\\f',
+    '\\': '\\\\',
+    '(': '\\(',
+    ')': '\\)',
 };
-
+// Convert little endian UTF-16 to big endian
+const swapBytes = (buff) => {
+    const l = buff.length;
+    if (l & 0x01) {
+        throw new Error('Buffer length must be even');
+    }
+    else {
+        for (let i = 0, end = l - 1; i < end; i += 2) {
+            const a = buff[i];
+            buff[i] = buff[i + 1];
+            buff[i + 1] = a;
+        }
+    }
+    return buff;
+};
 class PDFObject {
-  static convert(object, encryptFn = null) {
-    // String literals are converted to the PDF name type
-    if (typeof object === 'string') {
-      return `/${object}`; // String objects are converted to PDF strings (UTF-16)
-    }
-
-    if (object instanceof String) {
-      let string = object; // Detect if this is a unicode string
-
-      let isUnicode = false;
-
-      for (let i = 0, end = string.length; i < end; i += 1) {
-        if (string.charCodeAt(i) > 0x7f) {
-          isUnicode = true;
-          break;
+    static convert(object, encryptFn) {
+        // String literals are converted to the PDF name type
+        if (typeof object === 'string') {
+            return `/${object}`;
+            // String objects are converted to PDF strings (UTF-16)
         }
-      } // If so, encode it as big endian UTF-16
-
-
-      let stringBuffer;
-
-      if (isUnicode) {
-        stringBuffer = swapBytes(Buffer.from(`\ufeff${string}`, 'utf16le'));
-      } else {
-        stringBuffer = Buffer.from(string, 'ascii');
-      } // Encrypt the string when necessary
-
-
-      if (encryptFn) {
-        string = encryptFn(stringBuffer).toString('binary');
-      } else {
-        string = stringBuffer.toString('binary');
-      } // Escape characters as required by the spec
-
-
-      string = string.replace(escapableRe, c => escapable[c]);
-      return `(${string})`; // Buffers are converted to PDF hex strings
-    }
-
-    if (Buffer.isBuffer(object)) {
-      return `<${object.toString('hex')}>`;
-    }
-
-    if (object instanceof _abstract_reference.default) {
-      return object.toString();
-    }
-
-    if (object instanceof Date) {
-      let string = `D:${pad(object.getUTCFullYear(), 4)}${pad(object.getUTCMonth() + 1, 2)}${pad(object.getUTCDate(), 2)}${pad(object.getUTCHours(), 2)}${pad(object.getUTCMinutes(), 2)}${pad(object.getUTCSeconds(), 2)}Z`; // Encrypt the string when necessary
-
-      if (encryptFn) {
-        string = encryptFn(Buffer.from(string, 'ascii')).toString('binary'); // Escape characters as required by the spec
-
-        string = string.replace(escapableRe, c => escapable[c]);
-      }
-
-      return `(${string})`;
-    }
-
-    if (Array.isArray(object)) {
-      const items = object.map(e => PDFObject.convert(e, encryptFn)).join(' ');
-      return `[${items}]`;
-    }
-
-    if ({}.toString.call(object) === '[object Object]') {
-      const out = ['<<'];
-      let streamData;
-
-      for (const key in object) {
-        if (object.hasOwnProperty(key)) {
-          let val = object[key];
-          let checkedValue = '';
-
-          if (val.toString().indexOf('<<') !== -1) {
-            checkedValue = val;
-          } else {
-            checkedValue = PDFObject.convert(val, encryptFn);
-          }
-
-          if (key === 'stream') {
-            streamData = `${key}\n${val}\nendstream`;
-          } else {
-            out.push(`/${key} ${checkedValue}`);
-          }
+        else if (object instanceof String) {
+            let str = object;
+            // Detect if this is a unicode string
+            let isUnicode = false;
+            for (let i = 0, end = str.length; i < end; i += 1) {
+                if (str.charCodeAt(i) > 0x7f) {
+                    isUnicode = true;
+                    break;
+                }
+            }
+            // If so, encode it as big endian UTF-16
+            let stringBuffer;
+            if (isUnicode) {
+                stringBuffer = swapBytes(Buffer.from(`\ufeff${str}`, 'utf16le'));
+            }
+            else {
+                stringBuffer = Buffer.from(str, 'ascii');
+            }
+            // Encrypt the string when necessary
+            if (encryptFn) {
+                str = encryptFn(stringBuffer).toString('binary');
+            }
+            else {
+                str = stringBuffer.toString('binary');
+            }
+            // Escape characters as required by the spec
+            str = str.replace(escapableRe, c => escapable[c]);
+            return `(${str})`;
+            // Buffers are converted to PDF hex strings
         }
-      }
-
-      out.push('>>');
-
-      if (streamData) {
-        out.push(streamData);
-      }
-
-      return out.join('\n');
+        else if (Buffer.isBuffer(object)) {
+            return `<${object.toString('hex')}>`;
+        }
+        else if (object instanceof abstract_reference_1.default) {
+            return object.toString();
+        }
+        else if (object instanceof Date) {
+            // tslint:disable-next-line
+            let str = `D:${pad(object.getUTCFullYear(), 4)}${pad(object.getUTCMonth() + 1, 2)}${pad(object.getUTCDate(), 2)}${pad(object.getUTCHours(), 2)}${pad(object.getUTCMinutes(), 2)}${pad(object.getUTCSeconds(), 2)}Z`;
+            // Encrypt the string when necessary
+            if (encryptFn) {
+                str = encryptFn(Buffer.from(str, 'ascii')).toString('binary');
+                // Escape characters as required by the spec
+                str = str.replace(escapableRe, c => escapable[c]);
+            }
+            return `(${str})`;
+        }
+        else if (Array.isArray(object)) {
+            const items = object.map(e => PDFObject.convert(e, encryptFn)).join(' ');
+            return `[${items}]`;
+        }
+        else if ({}.toString.call(object) === '[object Object]') {
+            const out = ['<<'];
+            let streamData;
+            for (const key in object) {
+                if (object.hasOwnProperty(key)) {
+                    let val = object[key];
+                    let checkedValue = '';
+                    if (val.toString().indexOf('<<') !== -1) {
+                        checkedValue = val;
+                    }
+                    else {
+                        checkedValue = PDFObject.convert(val, encryptFn);
+                    }
+                    if (key === 'stream') {
+                        streamData = `${key}\n${val}\nendstream`;
+                    }
+                    else {
+                        out.push(`/${key} ${checkedValue}`);
+                    }
+                }
+            }
+            out.push('>>');
+            if (streamData) {
+                out.push(streamData);
+            }
+            return out.join('\n');
+        }
+        else if (typeof object === 'number') {
+            return PDFObject.number(object);
+        }
+        return `${object}`;
     }
-
-    if (typeof object === 'number') {
-      return PDFObject.number(object);
+    static number(n) {
+        if (n > -1e21 && n < 1e21) {
+            return Math.round(n * 1e6) / 1e6;
+        }
+        throw new Error(`unsupported number: ${n}`);
     }
-
-    return `${object}`;
-  }
-
-  static number(n) {
-    if (n > -1e21 && n < 1e21) {
-      return Math.round(n * 1e6) / 1e6;
-    }
-
-    throw new Error(`unsupported number: ${n}`);
-  }
-
 }
-
 exports.default = PDFObject;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicGRmb2JqZWN0LmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vc3JjL2hlbHBlcnMvcGRma2l0L3BkZm9iamVjdC50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiO0FBQUE7Ozs7O0VBS0U7O0FBRUYsNkRBQXdEO0FBQ3hEOzs7RUFHRTtBQUVGLE1BQU0sR0FBRyxHQUFHLENBQUMsR0FBUSxFQUFFLE1BQWMsRUFBRSxFQUFFLENBQUMsQ0FBQyxLQUFLLENBQUMsTUFBTSxHQUFHLENBQUMsQ0FBQyxDQUFDLElBQUksQ0FBQyxHQUFHLENBQUMsR0FBRyxHQUFHLENBQUMsQ0FBQyxLQUFLLENBQUMsQ0FBQyxNQUFNLENBQUMsQ0FBQztBQUU3RixNQUFNLFdBQVcsR0FBRyxxQkFBcUIsQ0FBQztBQUMxQyxNQUFNLFNBQVMsR0FBOEI7SUFDekMsSUFBSSxFQUFFLEtBQUs7SUFDWCxJQUFJLEVBQUUsS0FBSztJQUNYLElBQUksRUFBRSxLQUFLO0lBQ1gsSUFBSSxFQUFFLEtBQUs7SUFDWCxJQUFJLEVBQUUsS0FBSztJQUNYLElBQUksRUFBRSxNQUFNO0lBQ1osR0FBRyxFQUFFLEtBQUs7SUFDVixHQUFHLEVBQUUsS0FBSztDQUNiLENBQUM7QUFFRiw2Q0FBNkM7QUFDN0MsTUFBTSxTQUFTLEdBQUcsQ0FBQyxJQUFZLEVBQVUsRUFBRTtJQUN2QyxNQUFNLENBQUMsR0FBRyxJQUFJLENBQUMsTUFBTSxDQUFDO0lBQ3RCLElBQUksQ0FBQyxHQUFHLElBQUksRUFBRTtRQUNWLE1BQU0sSUFBSSxLQUFLLENBQUMsNEJBQTRCLENBQUMsQ0FBQztLQUNqRDtTQUFNO1FBQ0gsS0FBSyxJQUFJLENBQUMsR0FBRyxDQUFDLEVBQUUsR0FBRyxHQUFHLENBQUMsR0FBRyxDQUFDLEVBQUUsQ0FBQyxHQUFHLEdBQUcsRUFBRSxDQUFDLElBQUksQ0FBQyxFQUFFO1lBQzFDLE1BQU0sQ0FBQyxHQUFHLElBQUksQ0FBQyxDQUFDLENBQUMsQ0FBQztZQUNsQixJQUFJ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UyxDQUFDLENBQUM7cUJBQ3BEO29CQUVELElBQUksR0FBRyxLQUFLLFFBQVEsRUFBRTt3QkFDbEIsVUFBVSxHQUFHLEdBQUcsR0FBRyxLQUFLLEdBQUcsYUFBYSxDQUFDO3FCQUM1Qzt5QkFBTTt3QkFDSCxHQUFHLENBQUMsSUFBSSxDQUFDLElBQUksR0FBRyxJQUFJLFlBQVksRUFBRSxDQUFDLENBQUM7cUJBQ3ZDO2lCQUNKO2FBQ0o7WUFDRCxHQUFHLENBQUMsSUFBSSxDQUFDLElBQUksQ0FBQyxDQUFDO1lBRWYsSUFBSSxVQUFVLEVBQUU7Z0JBQ1osR0FBRyxDQUFDLElBQUksQ0FBQyxVQUFVLENBQUMsQ0FBQzthQUN4QjtZQUNELE9BQU8sR0FBRyxDQUFDLElBQUksQ0FBQyxJQUFJLENBQUMsQ0FBQztTQUN6QjthQUFNLElBQUksT0FBTyxNQUFNLEtBQUssUUFBUSxFQUFFO1lBQ25DLE9BQU8sU0FBUyxDQUFDLE1BQU0sQ0FBQyxNQUFNLENBQUMsQ0FBQztTQUNuQztRQUNELE9BQU8sR0FBRyxNQUFNLEVBQUUsQ0FBQztJQUN2QixDQUFDO0lBRU0sTUFBTSxDQUFDLE1BQU0sQ0FBQyxDQUFTO1FBQzFCLElBQUksQ0FBQyxHQUFHLENBQUMsSUFBSSxJQUFJLENBQUMsR0FBRyxJQUFJLEVBQUU7WUFDdkIsT0FBTyxJQUFJLENBQUMsS0FBSyxDQUFDLENBQUMsR0FBRyxHQUFHLENBQUMsR0FBRyxHQUFHLENBQUM7U0FDcEM7UUFFRCxNQUFNLElBQUksS0FBSyxDQUFDLHVCQUF1QixDQUFDLEVBQUUsQ0FBQyxDQUFDO0lBQ2hELENBQUM7Q0FDSjtBQXBHRCw0QkFvR0MiLCJzb3VyY2VzQ29udGVudCI6WyIvKlxuUERGT2JqZWN0IGJ5IERldm9uIEdvdmV0dCB1c2VkIGJlbG93LlxuVGhlIGNsYXNzIGlzIHBhcnQgb2YgcGRma2l0LiBTZWUgaHR0cHM6Ly9naXRodWIuY29tL2ZvbGlvanMvcGRma2l0XG5MSUNFTlNFOiBNSVQuIEluY2x1ZGVkIGluIHRoaXMgZm9sZGVyLlxuTW9kaWZpY2F0aW9ucyBtYXkgaGF2ZSBiZWVuIGFwcGxpZWQgZm9yIHRoZSBwdXJwb3NlcyBvZiBub2RlLXNpZ25wZGYuXG4qL1xuXG5pbXBvcnQgUERGQWJzdHJhY3RSZWZlcmVuY2UgZnJvbSAnLi9hYnN0cmFjdF9yZWZlcmVuY2UnO1xuLypcblBERk9iamVjdCAtIGNvbnZlcnRzIEphdmFTY3JpcHQgdHlwZXMgaW50byB0aGVpciBjb3JyZXNwb25kaW5nIFBERiB0eXBlcy5cbkJ5IERldm9uIEdvdmV0dFxuKi9cblxuY29uc3QgcGFkID0gKHN0cjogYW55LCBsZW5ndGg6IG51bWJlcikgPT4gKEFycmF5KGxlbmd0aCArIDEpLmpvaW4oJzAnKSArIHN0cikuc2xpY2UoLWxlbmd0aCk7XG5cbmNvbnN0IGVzY2FwYWJsZVJlID0gL1tcXG5cXHJcXHRcXGJcXGZcXChcXClcXFxcXS9nO1xuY29uc3QgZXNjYXBhYmxlOiB7IFtrZXk6IHN0cmluZ106IHN0cmluZyB9ID0ge1xuICAgICdcXG4nOiAnXFxcXG4nLFxuICAgICdcXHInOiAnXFxcXHInLFxuICAgICdcXHQnOiAnXFxcXHQnLFxuICAgICdcXGInOiAnXFxcXGInLFxuICAgICdcXGYnOiAnXFxcXGYnLFxuICAgICdcXFxcJzogJ1xcXFxcXFxcJyxcbiAgICAnKCc6ICdcXFxcKCcsXG4gICAgJyknOiAnXFxcXCknLFxufTtcblxuLy8gQ29udmVydCBsaXR0bGUgZW5kaWFuIFVURi0xNiB0byBiaWcgZW5kaWFuXG5jb25zdCBzd2FwQnl0ZXMgPSAoYnVmZjogQnVmZmVyKTogQnVmZmVyID0+IHtcbiAgICBjb25zdCBsID0gYnVmZi5sZW5ndGg7XG4gICAgaWYgKGwgJiAweDAxKSB7XG4gICAgICAgIHRocm93IG5ldyBFcnJvcignQnVmZmVyIGxlbmd0aCBtdXN0IGJlIGV2ZW4nKTtcbiAgICB9IGVsc2Uge1xuICAgICAgICBmb3IgKGxldCBpID0gMCwgZW5kID0gbCAtIDE7IGkgPCBlbmQ7IGkgKz0gMikge1xuICAgICAgICAgICAgY29uc3QgYSA9IGJ1ZmZbaV07XG4gICAgICAgICAgICBidWZmW2ldID0gYnVmZltpICsgMV07XG4gICAgICAgICAgICBidWZmW2kgKyAxXSA9IGE7XG4gICAgICAgIH1cbiAgICB9XG5cbiAgICByZXR1cm4gYnVmZjtcbn07XG5cbmV4cG9ydCBkZWZhdWx0IGNsYXNzIFBERk9iamVjdCB7XG4gICAgcHVibGljIHN0YXRpYyBjb252ZXJ0KG9iamVjdDogYW55LCBlbmNyeXB0Rm4/OiBhbnkpOiBhbnkge1xuICAgIC8vIFN0cmluZyBsaXRlcmFscyBhcmUgY29udmVydGVkIHRvIHRoZSBQREYgbmFtZSB0eXBlXG4gICAgICAgIGlmICh0eXBlb2Ygb2JqZWN0ID09PSAnc3RyaW5nJykge1xuICAgICAgICAgICAgcmV0dXJuIGAvJHtvYmplY3R9YDtcblxuICAgICAgICAgICAgLy8gU3RyaW5nIG9iamVjdHMgYXJlIGNvbnZlcnRlZCB0byBQREYgc3RyaW5ncyAoVVRGLTE2KVxuICAgICAgICB9IGVsc2UgaWYgKG9iamVjdCBpbnN0YW5jZW9mIFN0cmluZykge1xuICAgICAgICAgICAgbGV0IHN0ciA9IG9iamVjdDtcbiAgICAgICAgICAgIC8vIERldGVjdCBpZiB0aGlzIGlzIGEgdW5pY29kZSBzdHJpbmdcbiAgICAgICAgICAgIGxldCBpc1VuaWNvZGUgPSBmYWxzZTtcbiAgICAgICAgICAgIGZvciAobGV0IGkgPSAwLCBlbmQgPSBzdHIubGVuZ3RoOyBpIDwgZW5kOyBpICs9IDEpIHtcbiAgICAgICAgICAgICAgICBpZiAoc3RyLmNoYXJDb2RlQXQoaSkgPiAweDdmKSB7XG4gICAgICAgICAgICAgICAgICAgIGlzVW5pY29kZSA9IHRydWU7XG4gICAgICAgICAgICAgICAgICAgIGJyZWFrO1xuICAgICAgICAgICAgICAgIH1cbiAgICAgICAgICAgIH1cblxuICAgICAgICAgICAgLy8gSWYgc28sIGVuY29kZSBpdCBhcyBiaWcgZW5kaWFuIFVURi0xNlxuICAgICAgICAgICAgbGV0IHN0cmluZ0J1ZmZlcjtcbiAgICAgICAgICAgIGlmIChpc1VuaWNvZGUpIHtcbiAgICAgICAgICAgICAgICBzdHJpbmdCdWZmZXIgPSBzd2FwQnl0ZXMoQnVmZmVyLmZyb20oYFxcdWZlZmYke3N0cn1gLCAndXRmMTZsZScpKTtcbiAgICAgICAgICAgIH0gZWxzZSB7XG4gICAgICAgICAgICAgICAgc3RyaW5nQnVmZmVyID0gQnVmZmVyLmZyb20oc3RyIGFzIHN0cmluZywgJ2FzY2lpJyk7XG4gICAgICAgICAgICB9XG5cbiAgICAgICAgICAgIC8vIEVuY3J5cHQgdGhlIHN0cmluZyB3aGVuIG5lY2Vzc2FyeVxuICAgICAgICAgICAgaWYgKGVuY3J5cHRGbikge1xuICAgICAgICAgICAgICAgIHN0ciA9IGVuY3J5cHRGbihzdHJpbmdCdWZmZXIpLnRvU3RyaW5nKCdiaW5hcnknKTtcbiAgICAgICAgICAgIH0gZWxzZSB7XG4gICAgICAgICAgICAgICAgc3RyID0gc3RyaW5nQnVmZmVyLnRvU3RyaW5nKCdiaW5hcnknKTtcbiAgICAgICAgICAgIH1cblxuICAgICAgICAgICAgLy8gRXNjYXBlIGNoYXJhY3RlcnMgYXMgcmVxdWlyZWQgYnkgdGhlIHNwZWNcbiAgICAgICAgICAgIHN0ciA9IHN0ci5yZXBsYWNlKGVzY2FwYWJsZVJlLCBjID0+IGVzY2FwYWJsZVtjXSApO1xuXG4gICAgICAgICAgICByZXR1cm4gYCgke3N0cn0pYDtcblxuICAgICAgICAgICAgLy8gQnVmZmVycyBhcmUgY29udmVydGVkIHRvIFBERiBoZXggc3RyaW5nc1xuICAgICAgICB9IGVsc2UgaWYgKEJ1ZmZlci5pc0J1ZmZlcihvYmplY3QpKSB7XG4gICAgICAgICAgICByZXR1cm4gYDwke29iamVjdC50b1N0cmluZygnaGV4Jyl9PmA7XG4gICAgICAgIH0gZWxzZSBpZiAob2JqZWN0IGluc3RhbmNlb2YgUERGQWJzdHJhY3RSZWZlcmVuY2UpIHtcbiAgICAgICAgICAgIHJldHVybiBvYmplY3QudG9TdHJpbmcoKTtcbiAgICAgICAgfSBlbHNlIGlmIChvYmplY3QgaW5zdGFuY2VvZiBEYXRlKSB7XG4gICAgICAgICAgICAvLyB0c2xpbnQ6ZGlzYWJsZS1uZXh0LWxpbmVcbiAgICAgICAgICAgIGxldCBzdHIgPSBgRDoke3BhZChvYmplY3QuZ2V0VVRDRnVsbFllYXIoKSwgNCl9JHtwYWQob2JqZWN0LmdldFVUQ01vbnRoKCkgKyAxLCAyKX0ke3BhZChvYmplY3QuZ2V0VVRDRGF0ZSgpLCAyKX0ke3BhZChvYmplY3QuZ2V0VVRDSG91cnMoKSwgMil9JHtwYWQob2JqZWN0LmdldFVUQ01pbnV0ZXMoKSwgMil9JHtwYWQob2JqZWN0LmdldFVUQ1NlY29uZHMoKSwgMil9WmA7XG5cbiAgICAgICAgICAgIC8vIEVuY3J5cHQgdGhlIHN0cmluZyB3aGVuIG5lY2Vzc2FyeVxuICAgICAgICAgICAgaWYgKGVuY3J5cHRGbikge1xuICAgICAgICAgICAgICAgIHN0ciA9IGVuY3J5cHRGbihCdWZmZXIuZnJvbShzdHIsICdhc2NpaScpKS50b1N0cmluZygnYmluYXJ5Jyk7XG5cbiAgICAgICAgICAgICAgICAvLyBFc2NhcGUgY2hhcmFjdGVycyBhcyByZXF1aXJlZCBieSB0aGUgc3BlY1xuICAgICAgICAgICAgICAgIHN0ciA9IHN0ci5yZXBsYWNlKGVzY2FwYWJsZVJlLCBjID0+IGVzY2FwYWJsZVtjXSk7XG4gICAgICAgICAgICB9XG5cbiAgICAgICAgICAgIHJldHVybiBgKCR7c3RyfSlgO1xuICAgICAgICB9IGVsc2UgaWYgKEFycmF5LmlzQXJyYXkob2JqZWN0KSkge1xuICAgICAgICAgICAgY29uc3QgaXRlbXMgPSBvYmplY3QubWFwKGUgPT4gUERGT2JqZWN0LmNvbnZlcnQoZSwgZW5jcnlwdEZuKSkuam9pbignICcpO1xuICAgICAgICAgICAgcmV0dXJuIGBbJHtpdGVtc31dYDtcbiAgICAgICAgfSBlbHNlIGlmICh7fS50b1N0cmluZy5jYWxsKG9iamVjdCkgPT09ICdbb2JqZWN0IE9iamVjdF0nKSB7XG4gICAgICAgICAgICBjb25zdCBvdXQgPSBbJzw8J107XG4gICAgICAgICAgICBsZXQgc3RyZWFtRGF0YTtcblxuICAgICAgICAgICAgZm9yIChjb25zdCBrZXkgaW4gb2JqZWN0KSB7XG4gICAgICAgICAgICAgICAgaWYgKG9iamVjdC5oYXNPd25Qcm9wZXJ0eShrZXkpKSB7XG4gICAgICAgICAgICAgICAgICAgIGxldCB2YWwgPSBvYmplY3Rba2V5XTtcbiAgICAgICAgICAgICAgICAgICAgbGV0IGNoZWNrZWRWYWx1ZSA9ICcnO1xuXG4gICAgICAgICAgICAgICAgICAgIGlmICh2YWwudG9TdHJpbmcoKS5pbmRleE9mKCc8PCcpICE9PSAtMSkge1xuICAgICAgICAgICAgICAgICAgICAgICAgY2hlY2tlZFZhbHVlID0gdmFsO1xuICAgICAgICAgICAgICAgICAgICB9IGVsc2Uge1xuICAgICAgICAgICAgICAgICAgICAgICAgY2hlY2tlZFZhbHVlID0gUERGT2JqZWN0LmNvbnZlcnQodmFsLCBlbmNyeXB0Rm4pO1xuICAgICAgICAgICAgICAgICAgICB9XG5cbiAgICAgICAgICAgICAgICAgICAgaWYgKGtleSA9PT0gJ3N0cmVhbScpIHtcbiAgICAgICAgICAgICAgICAgICAgICAgIHN0cmVhbURhdGEgPSBgJHtrZXl9XFxuJHt2YWx9XFxuZW5kc3RyZWFtYDtcbiAgICAgICAgICAgICAgICAgICAgfSBlbHNlIHtcbiAgICAgICAgICAgICAgICAgICAgICAgIG91dC5wdXNoKGAvJHtrZXl9ICR7Y2hlY2tlZFZhbHVlfWApO1xuICAgICAgICAgICAgICAgICAgICB9XG4gICAgICAgICAgICAgICAgfVxuICAgICAgICAgICAgfVxuICAgICAgICAgICAgb3V0LnB1c2goJz4+Jyk7XG5cbiAgICAgICAgICAgIGlmIChzdHJlYW1EYXRhKSB7XG4gICAgICAgICAgICAgICAgb3V0LnB1c2goc3RyZWFtRGF0YSk7XG4gICAgICAgICAgICB9XG4gICAgICAgICAgICByZXR1cm4gb3V0LmpvaW4oJ1xcbicpO1xuICAgICAgICB9IGVsc2UgaWYgKHR5cGVvZiBvYmplY3QgPT09ICdudW1iZXInKSB7XG4gICAgICAgICAgICByZXR1cm4gUERGT2JqZWN0Lm51bWJlcihvYmplY3QpO1xuICAgICAgICB9XG4gICAgICAgIHJldHVybiBgJHtvYmplY3R9YDtcbiAgICB9XG5cbiAgICBwdWJsaWMgc3RhdGljIG51bWJlcihuOiBudW1iZXIpIHtcbiAgICAgICAgaWYgKG4gPiAtMWUyMSAmJiBuIDwgMWUyMSkge1xuICAgICAgICAgICAgcmV0dXJuIE1hdGgucm91bmQobiAqIDFlNikgLyAxZTY7XG4gICAgICAgIH1cblxuICAgICAgICB0aHJvdyBuZXcgRXJyb3IoYHVuc3VwcG9ydGVkIG51bWJlcjogJHtufWApO1xuICAgIH1cbn1cbiJdfQ==

@@ -1,27 +1,22 @@
 "use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _findObject = _interopRequireDefault(require("./findObject"));
-
-var _getIndexFromRef = _interopRequireDefault(require("./getIndexFromRef"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-const createBufferPageWithAnnotation = (pdf, info, pagesRef, widget) => {
-  const pagesDictionary = (0, _findObject.default)(pdf, info.xref, pagesRef).toString(); // Extend page dictionary with newly created annotations
-
-  const splittedDictionary = pagesDictionary.split('/Annots')[0];
-  let splittedIds = pagesDictionary.split('/Annots')[1]; // eslint-disable-next-line no-useless-escape
-
-  splittedIds = splittedIds === undefined ? '' : splittedIds.replace(/[\[\]]/g, '');
-  const pagesDictionaryIndex = (0, _getIndexFromRef.default)(info.xref, pagesRef);
-  const widgetValue = widget.toString();
-  return Buffer.concat([Buffer.from(`${pagesDictionaryIndex} 0 obj\n`), Buffer.from('<<\n'), Buffer.from(`${splittedDictionary}\n`), Buffer.from(`/Annots [${splittedIds} ${widgetValue}]`), Buffer.from('\n>>\nendobj\n')]);
-};
-
-var _default = createBufferPageWithAnnotation;
-exports.default = _default;
+Object.defineProperty(exports, "__esModule", { value: true });
+const findObject_1 = require("./findObject");
+const getIndexFromRef_1 = require("./getIndexFromRef");
+function createBufferPageWithAnnotation(pdf, info, pagesRef, widget) {
+    const pagesDictionary = findObject_1.findObject(pdf, info.xref, pagesRef).toString();
+    // Extend page dictionary with newly created annotations
+    const splittedDictionary = pagesDictionary.split('/Annots')[0];
+    let splittedIds = pagesDictionary.split('/Annots')[1];
+    splittedIds = splittedIds === undefined ? '' : splittedIds.replace(/[\[\]]/g, '');
+    const pagesDictionaryIndex = getIndexFromRef_1.getIndexFromRef(info.xref, pagesRef);
+    const widgetValue = widget.toString();
+    return Buffer.concat([
+        Buffer.from(`${pagesDictionaryIndex} 0 obj\n`),
+        Buffer.from('<<\n'),
+        Buffer.from(`${splittedDictionary}\n`),
+        Buffer.from(`/Annots [${splittedIds} ${widgetValue}]`),
+        Buffer.from('\n>>\nendobj\n'),
+    ]);
+}
+exports.createBufferPageWithAnnotation = createBufferPageWithAnnotation;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiY3JlYXRlQnVmZmVyUGFnZVdpdGhBbm5vdGF0aW9uLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vc3JjL2hlbHBlcnMvcGxhaW5BZGRQbGFjZWhvbGRlci9jcmVhdGVCdWZmZXJQYWdlV2l0aEFubm90YXRpb24udHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7QUFBQSw2Q0FBMEM7QUFDMUMsdURBQW9EO0FBR3BELFNBQWdCLDhCQUE4QixDQUFDLEdBQVcsRUFBRSxJQUFhLEVBQUUsUUFBZ0IsRUFBRSxNQUFXO0lBQ3BHLE1BQU0sZUFBZSxHQUFHLHVCQUFVLENBQUMsR0FBRyxFQUFFLElBQUksQ0FBQyxJQUFJLEVBQUUsUUFBUSxDQUFDLENBQUMsUUFBUSxFQUFFLENBQUM7SUFFeEUsd0RBQXdEO0lBQ3hELE1BQU0sa0JBQWtCLEdBQUcsZUFBZSxDQUFDLEtBQUssQ0FBQyxTQUFTLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQztJQUMvRCxJQUFJLFdBQVcsR0FBRyxlQUFlLENBQUMsS0FBSyxDQUFDLFNBQVMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDO0lBQ3RELFdBQVcsR0FBRyxXQUFXLEtBQUssU0FBUyxDQUFDLENBQUMsQ0FBQyxFQUFFLENBQUMsQ0FBQyxDQUFDLFdBQVcsQ0FBQyxPQUFPLENBQUMsU0FBUyxFQUFFLEVBQUUsQ0FBQyxDQUFDO0lBRWxGLE1BQU0sb0JBQW9CLEdBQUcsaUNBQWUsQ0FBQyxJQUFJLENBQUMsSUFBSSxFQUFFLFFBQVEsQ0FBQyxDQUFDO0lBQ2xFLE1BQU0sV0FBVyxHQUFHLE1BQU0sQ0FBQyxRQUFRLEVBQUUsQ0FBQztJQUV0QyxPQUFPLE1BQU0sQ0FBQyxNQUFNLENBQUM7UUFDakIsTUFBTSxDQUFDLElBQUksQ0FBQyxHQUFHLG9CQUFvQixVQUFVLENBQUM7UUFDOUMsTUFBTSxDQUFDLElBQUksQ0FBQyxNQUFNLENBQUM7UUFDbkIsTUFBTSxDQUFDLElBQUksQ0FBQyxHQUFHLGtCQUFrQixJQUFJLENBQUM7UUFDdEMsTUFBTSxDQUFDLElBQUksQ0FBQyxZQUFZLFdBQVcsSUFBSSxXQUFXLEdBQUcsQ0FBQztRQUN0RCxNQUFNLENBQUMsSUFBSSxDQUFDLGdCQUFnQixDQUFDO0tBQ2hDLENBQUMsQ0FBQztBQUNQLENBQUM7QUFsQkQsd0VBa0JDIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgZmluZE9iamVjdCB9IGZyb20gJy4vZmluZE9iamVjdCc7XG5pbXBvcnQgeyBnZXRJbmRleEZyb21SZWYgfSBmcm9tICcuL2dldEluZGV4RnJvbVJlZic7XG5pbXBvcnQgeyBQZGZJbmZvIH0gZnJvbSAnLi9yZWFkUGRmJztcblxuZXhwb3J0IGZ1bmN0aW9uIGNyZWF0ZUJ1ZmZlclBhZ2VXaXRoQW5ub3RhdGlvbihwZGY6IEJ1ZmZlciwgaW5mbzogUGRmSW5mbywgcGFnZXNSZWY6IHN0cmluZywgd2lkZ2V0OiBhbnkpOiBCdWZmZXIge1xuICAgIGNvbnN0IHBhZ2VzRGljdGlvbmFyeSA9IGZpbmRPYmplY3QocGRmLCBpbmZvLnhyZWYsIHBhZ2VzUmVmKS50b1N0cmluZygpO1xuXG4gICAgLy8gRXh0ZW5kIHBhZ2UgZGljdGlvbmFyeSB3aXRoIG5ld2x5IGNyZWF0ZWQgYW5ub3RhdGlvbnNcbiAgICBjb25zdCBzcGxpdHRlZERpY3Rpb25hcnkgPSBwYWdlc0RpY3Rpb25hcnkuc3BsaXQoJy9Bbm5vdHMnKVswXTtcbiAgICBsZXQgc3BsaXR0ZWRJZHMgPSBwYWdlc0RpY3Rpb25hcnkuc3BsaXQoJy9Bbm5vdHMnKVsxXTtcbiAgICBzcGxpdHRlZElkcyA9IHNwbGl0dGVkSWRzID09PSB1bmRlZmluZWQgPyAnJyA6IHNwbGl0dGVkSWRzLnJlcGxhY2UoL1tcXFtcXF1dL2csICcnKTtcblxuICAgIGNvbnN0IHBhZ2VzRGljdGlvbmFyeUluZGV4ID0gZ2V0SW5kZXhGcm9tUmVmKGluZm8ueHJlZiwgcGFnZXNSZWYpO1xuICAgIGNvbnN0IHdpZGdldFZhbHVlID0gd2lkZ2V0LnRvU3RyaW5nKCk7XG5cbiAgICByZXR1cm4gQnVmZmVyLmNvbmNhdChbXG4gICAgICAgIEJ1ZmZlci5mcm9tKGAke3BhZ2VzRGljdGlvbmFyeUluZGV4fSAwIG9ialxcbmApLFxuICAgICAgICBCdWZmZXIuZnJvbSgnPDxcXG4nKSxcbiAgICAgICAgQnVmZmVyLmZyb20oYCR7c3BsaXR0ZWREaWN0aW9uYXJ5fVxcbmApLFxuICAgICAgICBCdWZmZXIuZnJvbShgL0Fubm90cyBbJHtzcGxpdHRlZElkc30gJHt3aWRnZXRWYWx1ZX1dYCksXG4gICAgICAgIEJ1ZmZlci5mcm9tKCdcXG4+PlxcbmVuZG9ialxcbicpLFxuICAgIF0pO1xufVxuIl19

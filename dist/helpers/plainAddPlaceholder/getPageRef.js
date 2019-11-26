@@ -1,29 +1,22 @@
 "use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = getPageRef;
-
-var _getPagesDictionaryRef = _interopRequireDefault(require("./getPagesDictionaryRef"));
-
-var _findObject = _interopRequireDefault(require("./findObject"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
+Object.defineProperty(exports, "__esModule", { value: true });
+const getPagesDictionaryRef_1 = require("./getPagesDictionaryRef");
+const findObject_1 = require("./findObject");
 /**
  * Finds the reference to a page.
  *
  * @param {Buffer} pdfBuffer
- * @param {Object} info As extracted from readRef()
+ * @param {PdfInfo} info As extracted from readRef()
  */
 function getPageRef(pdfBuffer, info) {
-  const pagesRef = (0, _getPagesDictionaryRef.default)(info);
-  const pagesDictionary = (0, _findObject.default)(pdfBuffer, info.xref, pagesRef);
-  const kidsPosition = pagesDictionary.indexOf('/Kids');
-  const kidsStart = pagesDictionary.indexOf('[', kidsPosition) + 1;
-  const kidsEnd = pagesDictionary.indexOf(']', kidsPosition);
-  const pages = pagesDictionary.slice(kidsStart, kidsEnd).toString();
-  const split = pages.trim().split(' ', 3);
-  return `${split[0]} ${split[1]} ${split[2]}`;
+    const pagesRef = getPagesDictionaryRef_1.getPagesDictionaryRef(info);
+    const pagesDictionary = findObject_1.findObject(pdfBuffer, info.xref, pagesRef);
+    const kidsPosition = pagesDictionary.indexOf('/Kids');
+    const kidsStart = pagesDictionary.indexOf('[', kidsPosition) + 1;
+    const kidsEnd = pagesDictionary.indexOf(']', kidsPosition);
+    const pages = pagesDictionary.slice(kidsStart, kidsEnd).toString();
+    const split = pages.trim().split(' ', 3);
+    return `${split[0]} ${split[1]} ${split[2]}`;
 }
+exports.getPageRef = getPageRef;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZ2V0UGFnZVJlZi5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9oZWxwZXJzL3BsYWluQWRkUGxhY2Vob2xkZXIvZ2V0UGFnZVJlZi50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOztBQUFBLG1FQUFnRTtBQUNoRSw2Q0FBMEM7QUFHMUM7Ozs7O0dBS0c7QUFDSCxTQUFnQixVQUFVLENBQUMsU0FBaUIsRUFBRSxJQUFhO0lBQ3ZELE1BQU0sUUFBUSxHQUFHLDZDQUFxQixDQUFDLElBQUksQ0FBQyxDQUFDO0lBQzdDLE1BQU0sZUFBZSxHQUFHLHVCQUFVLENBQUMsU0FBUyxFQUFFLElBQUksQ0FBQyxJQUFJLEVBQUUsUUFBUSxDQUFDLENBQUM7SUFDbkUsTUFBTSxZQUFZLEdBQUcsZUFBZSxDQUFDLE9BQU8sQ0FBQyxPQUFPLENBQUMsQ0FBQztJQUN0RCxNQUFNLFNBQVMsR0FBRyxlQUFlLENBQUMsT0FBTyxDQUFDLEdBQUcsRUFBRSxZQUFZLENBQUMsR0FBRyxDQUFDLENBQUM7SUFDakUsTUFBTSxPQUFPLEdBQUcsZUFBZSxDQUFDLE9BQU8sQ0FBQyxHQUFHLEVBQUUsWUFBWSxDQUFDLENBQUM7SUFDM0QsTUFBTSxLQUFLLEdBQUcsZUFBZSxDQUFDLEtBQUssQ0FBQyxTQUFTLEVBQUUsT0FBTyxDQUFDLENBQUMsUUFBUSxFQUFFLENBQUM7SUFDbkUsTUFBTSxLQUFLLEdBQUcsS0FBSyxDQUFDLElBQUksRUFBRSxDQUFDLEtBQUssQ0FBQyxHQUFHLEVBQUUsQ0FBQyxDQUFDLENBQUM7SUFDekMsT0FBTyxHQUFHLEtBQUssQ0FBQyxDQUFDLENBQUMsSUFBSSxLQUFLLENBQUMsQ0FBQyxDQUFDLElBQUksS0FBSyxDQUFDLENBQUMsQ0FBQyxFQUFFLENBQUM7QUFDakQsQ0FBQztBQVRELGdDQVNDIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgZ2V0UGFnZXNEaWN0aW9uYXJ5UmVmIH0gZnJvbSAnLi9nZXRQYWdlc0RpY3Rpb25hcnlSZWYnO1xuaW1wb3J0IHsgZmluZE9iamVjdCB9IGZyb20gJy4vZmluZE9iamVjdCc7XG5pbXBvcnQgeyBQZGZJbmZvIH0gZnJvbSAnLi9yZWFkUGRmJztcblxuLyoqXG4gKiBGaW5kcyB0aGUgcmVmZXJlbmNlIHRvIGEgcGFnZS5cbiAqXG4gKiBAcGFyYW0ge0J1ZmZlcn0gcGRmQnVmZmVyXG4gKiBAcGFyYW0ge1BkZkluZm99IGluZm8gQXMgZXh0cmFjdGVkIGZyb20gcmVhZFJlZigpXG4gKi9cbmV4cG9ydCBmdW5jdGlvbiBnZXRQYWdlUmVmKHBkZkJ1ZmZlcjogQnVmZmVyLCBpbmZvOiBQZGZJbmZvKTogc3RyaW5nIHtcbiAgICBjb25zdCBwYWdlc1JlZiA9IGdldFBhZ2VzRGljdGlvbmFyeVJlZihpbmZvKTtcbiAgICBjb25zdCBwYWdlc0RpY3Rpb25hcnkgPSBmaW5kT2JqZWN0KHBkZkJ1ZmZlciwgaW5mby54cmVmLCBwYWdlc1JlZik7XG4gICAgY29uc3Qga2lkc1Bvc2l0aW9uID0gcGFnZXNEaWN0aW9uYXJ5LmluZGV4T2YoJy9LaWRzJyk7XG4gICAgY29uc3Qga2lkc1N0YXJ0ID0gcGFnZXNEaWN0aW9uYXJ5LmluZGV4T2YoJ1snLCBraWRzUG9zaXRpb24pICsgMTtcbiAgICBjb25zdCBraWRzRW5kID0gcGFnZXNEaWN0aW9uYXJ5LmluZGV4T2YoJ10nLCBraWRzUG9zaXRpb24pO1xuICAgIGNvbnN0IHBhZ2VzID0gcGFnZXNEaWN0aW9uYXJ5LnNsaWNlKGtpZHNTdGFydCwga2lkc0VuZCkudG9TdHJpbmcoKTtcbiAgICBjb25zdCBzcGxpdCA9IHBhZ2VzLnRyaW0oKS5zcGxpdCgnICcsIDMpO1xuICAgIHJldHVybiBgJHtzcGxpdFswXX0gJHtzcGxpdFsxXX0gJHtzcGxpdFsyXX1gO1xufVxuIl19

@@ -1,19 +1,19 @@
 module.exports = {
     verbose: false,
-    testEnvironment: 'node',
-    moduleFileExtensions: [
-        'js',
-        'json',
-        'node',
+    testMatch: [
+        "**/__tests__/**/*.+(ts|tsx|js)",
+        "**/?(*.)+(spec|test).+(ts|tsx|js)"
     ],
-    testRegex: '(/__tests__/.*|\\.test)\\.js$',
+    transform: {
+        "^.+\\.(ts|tsx)$": "ts-jest"
+    },
     testPathIgnorePatterns: [
         'node_modules',
         'dist',
     ],
     coverageDirectory: 'coverage',
     collectCoverageFrom: [
-        'src/**/*.js',
+        'src/**/*.ts',
     ],
     coveragePathIgnorePatterns: [
         '/node_modules/',

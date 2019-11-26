@@ -1,24 +1,14 @@
 "use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _SignPdfError = _interopRequireDefault(require("../SignPdfError"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
+Object.defineProperty(exports, "__esModule", { value: true });
+const SignPdfError_1 = require("../SignPdfError");
 const getSubstringIndex = (str, substring, n) => {
-  var times = 0,
-      index = null;
-
-  while (times < n && index !== -1) {
-    index = str.indexOf(substring, index + 1);
-    times++;
-  }
-
-  return index;
+    let times = 0;
+    let index = null;
+    while (times < n && index !== -1) {
+        index = str.indexOf(substring, (index || 0) + 1);
+        times++;
+    }
+    return index;
 };
 /**
  * Basic implementation of signature extraction.
@@ -27,45 +17,40 @@ const getSubstringIndex = (str, substring, n) => {
  * in a document and ByteRange is only used once in it.
  *
  * @param {Buffer} pdf
- * @returns {Object} {ByteRange: Number[], signature: Buffer, signedData: Buffer}
+ * @returns {Signature} {ByteRange: Number[], signature: Buffer, signedData: Buffer}
  */
-
-
-const extractSignature = (pdf, signatureCount = 1) => {
-  if (!(pdf instanceof Buffer)) {
-    throw new _SignPdfError.default('PDF expected as Buffer.', _SignPdfError.default.TYPE_INPUT);
-  } // const byteRangePos = pdf.indexOf('/ByteRange [');
-
-
-  const byteRangePos = getSubstringIndex(pdf, '/ByteRange [', signatureCount);
-
-  if (byteRangePos === -1) {
-    throw new _SignPdfError.default('Failed to locate ByteRange.', _SignPdfError.default.TYPE_PARSE);
-  }
-
-  const byteRangeEnd = pdf.indexOf(']', byteRangePos);
-
-  if (byteRangeEnd === -1) {
-    throw new _SignPdfError.default('Failed to locate the end of the ByteRange.', _SignPdfError.default.TYPE_PARSE);
-  }
-
-  const byteRange = pdf.slice(byteRangePos, byteRangeEnd + 1).toString();
-  const matches = /\/ByteRange \[(\d+) +(\d+) +(\d+) +(\d+) *\]/.exec(byteRange);
-
-  if (matches === null) {
-    throw new _SignPdfError.default('Failed to parse the ByteRange.', _SignPdfError.default.TYPE_PARSE);
-  }
-
-  const ByteRange = matches.slice(1).map(Number);
-  const signedData = Buffer.concat([pdf.slice(ByteRange[0], ByteRange[0] + ByteRange[1]), pdf.slice(ByteRange[2], ByteRange[2] + ByteRange[3])]);
-  const signatureHex = pdf.slice(ByteRange[0] + ByteRange[1] + 1, ByteRange[2]).toString('binary').replace(/(?:00|>)+$/, '');
-  const signature = Buffer.from(signatureHex, 'hex').toString('binary');
-  return {
-    ByteRange: matches.slice(1, 5).map(Number),
-    signature,
-    signedData
-  };
-};
-
-var _default = extractSignature;
-exports.default = _default;
+function extractSignature(pdf, signatureCount = 1) {
+    if (!(pdf instanceof Buffer)) {
+        throw new SignPdfError_1.SignPdfError('PDF expected as Buffer.', SignPdfError_1.ERROR_TYPE_INPUT);
+    }
+    // const byteRangePos = pdf.indexOf('/ByteRange [');
+    const byteRangePos = getSubstringIndex(pdf, '/ByteRange [', signatureCount);
+    if (!byteRangePos || byteRangePos === -1) {
+        throw new SignPdfError_1.SignPdfError('Failed to locate ByteRange.', SignPdfError_1.ERROR_TYPE_PARSE);
+    }
+    const byteRangeEnd = pdf.indexOf(']', byteRangePos);
+    if (!byteRangeEnd || byteRangeEnd === -1) {
+        throw new SignPdfError_1.SignPdfError('Failed to locate the end of the ByteRange.', SignPdfError_1.ERROR_TYPE_PARSE);
+    }
+    const byteRange = pdf.slice(byteRangePos, byteRangeEnd + 1).toString();
+    const matches = (/\/ByteRange \[(\d+) +(\d+) +(\d+) +(\d+) *\]/).exec(byteRange);
+    if (matches === null) {
+        throw new SignPdfError_1.SignPdfError('Failed to parse the ByteRange.', SignPdfError_1.ERROR_TYPE_PARSE);
+    }
+    const ByteRange = matches.slice(1).map(Number);
+    const signedData = Buffer.concat([
+        pdf.slice(ByteRange[0], ByteRange[0] + ByteRange[1]),
+        pdf.slice(ByteRange[2], ByteRange[2] + ByteRange[3]),
+    ]);
+    const signatureHex = pdf.slice(ByteRange[0] + ByteRange[1] + 1, ByteRange[2])
+        .toString('binary')
+        .replace(/(?:00|>)+$/, '');
+    const signature = Buffer.from(signatureHex, 'hex').toString('binary');
+    return {
+        ByteRange: matches.slice(1, 5).map(Number),
+        signature,
+        signedData,
+    };
+}
+exports.extractSignature = extractSignature;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZXh0cmFjdFNpZ25hdHVyZS5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9oZWxwZXJzL2V4dHJhY3RTaWduYXR1cmUudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7QUFBQSxrREFBbUY7QUFFbkYsTUFBTSxpQkFBaUIsR0FBRyxDQUFDLEdBQW9CLEVBQUUsU0FBaUIsRUFBRSxDQUFTLEVBQUUsRUFBRTtJQUM3RSxJQUFJLEtBQUssR0FBRyxDQUFDLENBQUM7SUFDZCxJQUFJLEtBQUssR0FBRyxJQUFJLENBQUM7SUFFakIsT0FBTyxLQUFLLEdBQUcsQ0FBQyxJQUFJLEtBQUssS0FBSyxDQUFDLENBQUMsRUFBRTtRQUM5QixLQUFLLEdBQUcsR0FBRyxDQUFDLE9BQU8sQ0FBQyxTQUFTLEVBQUUsQ0FBQyxLQUFLLElBQUksQ0FBQyxDQUFDLEdBQUcsQ0FBQyxDQUFDLENBQUM7UUFDakQsS0FBSyxFQUFFLENBQUM7S0FDWDtJQUNELE9BQU8sS0FBSyxDQUFDO0FBQ2pCLENBQUMsQ0FBQztBQVFGOzs7Ozs7OztHQVFHO0FBQ0gsU0FBZ0IsZ0JBQWdCLENBQUMsR0FBVyxFQUFFLGNBQWMsR0FBRyxDQUFDO0lBQzVELElBQUksQ0FBQyxDQUFDLEdBQUcsWUFBWSxNQUFNLENBQUMsRUFBRTtRQUMxQixNQUFNLElBQUksMkJBQVksQ0FDbEIseUJBQXlCLEVBQ3pCLCtCQUFnQixDQUNuQixDQUFDO0tBQ0w7SUFFRCxvREFBb0Q7SUFDcEQsTUFBTSxZQUFZLEdBQUcsaUJBQWlCLENBQUMsR0FBRyxFQUFFLGNBQWMsRUFBRSxjQUFjLENBQUMsQ0FBQztJQUM1RSxJQUFJLENBQUMsWUFBWSxJQUFJLFlBQVksS0FBSyxDQUFDLENBQUMsRUFBRTtRQUN0QyxNQUFNLElBQUksMkJBQVksQ0FDbEIsNkJBQTZCLEVBQzdCLCtCQUFnQixDQUNuQixDQUFDO0tBQ0w7SUFFRCxNQUFNLFlBQVksR0FBRyxHQUFHLENBQUMsT0FBTyxDQUFDLEdBQUcsRUFBRSxZQUFZLENBQUMsQ0FBQztJQUNwRCxJQUFJLENBQUMsWUFBWSxJQUFJLFlBQVksS0FBSyxDQUFDLENBQUMsRUFBRTtRQUN0QyxNQUFNLElBQUksMkJBQVksQ0FDbEIsNENBQTRDLEVBQzVDLCtCQUFnQixDQUNuQixDQUFDO0tBQ0w7SUFFRCxNQUFNLFNBQVMsR0FBRyxHQUFHLENBQUMsS0FBSyxDQUFDLFlBQVksRUFBRSxZQUFZLEdBQUcsQ0FBQyxDQUFDLENBQUMsUUFBUSxFQUFFLENBQUM7SUFDdkUsTUFBTSxPQUFPLEdBQUcsQ0FBQyw4Q0FBOEMsQ0FBQyxDQUFDLElBQUksQ0FBQyxTQUFTLENBQUMsQ0FBQztJQUNqRixJQUFJLE9BQU8sS0FBSyxJQUFJLEVBQUU7UUFDbEIsTUFBTSxJQUFJLDJCQUFZLENBQ2xCLGdDQUFnQyxFQUNoQywrQkFBZ0IsQ0FDbkIsQ0FBQztLQUNMO0lBRUQsTUFBTSxTQUFTLEdBQUcsT0FBTyxDQUFDLEtBQUssQ0FBQyxDQUFDLENBQUMsQ0FBQyxHQUFHLENBQUMsTUFBTSxDQUFDLENBQUM7SUFDL0MsTUFBTSxVQUFVLEdBQUcsTUFBTSxDQUFDLE1BQU0sQ0FBQztRQUM3QixHQUFHLENBQUMsS0FBSyxDQUFDLFNBQVMsQ0FBQyxDQUFDLENBQUMsRUFBRSxTQUFTLENBQUMsQ0FBQyxDQUFDLEdBQUcsU0FBUyxDQUFDLENBQUMsQ0FBQyxDQUFDO1FBQ3BELEdBQUcsQ0FBQyxLQUFLLENBQUMsU0FBUyxDQUFDLENBQUMsQ0FBQyxFQUFFLFNBQVMsQ0FBQyxDQUFDLENBQUMsR0FBRyxTQUFTLENBQUMsQ0FBQyxDQUFDLENBQUM7S0FDdkQsQ0FBQyxDQUFDO0lBRUgsTUFBTSxZQUFZLEdBQUcsR0FBRyxDQUFDLEtBQUssQ0FBQyxTQUFTLENBQUMsQ0FBQyxDQUFDLEdBQUcsU0FBUyxDQUFDLENBQUMsQ0FBQyxHQUFHLENBQUMsRUFBRSxTQUFTLENBQUMsQ0FBQyxDQUFDLENBQUM7U0FDeEUsUUFBUSxDQUFDLFFBQVEsQ0FBQztTQUNsQixPQUFPLENBQUMsWUFBWSxFQUFFLEVBQUUsQ0FBQyxDQUFDO0lBRS9CLE1BQU0sU0FBUyxHQUFHLE1BQU0sQ0FBQyxJQUFJLENBQUMsWUFBWSxFQUFFLEtBQUssQ0FBQyxDQUFDLFFBQVEsQ0FBQyxRQUFRLENBQUMsQ0FBQztJQUV0RSxPQUFPO1FBQ0gsU0FBUyxFQUFFLE9BQU8sQ0FBQyxLQUFLLENBQUMsQ0FBQyxFQUFFLENBQUMsQ0FBQyxDQUFDLEdBQUcsQ0FBQyxNQUFNLENBQUM7UUFDMUMsU0FBUztRQUNULFVBQVU7S0FDYixDQUFDO0FBQ04sQ0FBQztBQW5ERCw0Q0FtREMiLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBFUlJPUl9UWVBFX0lOUFVULCBFUlJPUl9UWVBFX1BBUlNFLCBTaWduUGRmRXJyb3IgfSBmcm9tICcuLi9TaWduUGRmRXJyb3InO1xuXG5jb25zdCBnZXRTdWJzdHJpbmdJbmRleCA9IChzdHI6IHN0cmluZyB8IEJ1ZmZlciwgc3Vic3RyaW5nOiBzdHJpbmcsIG46IG51bWJlcikgPT4ge1xuICAgIGxldCB0aW1lcyA9IDA7XG4gICAgbGV0IGluZGV4ID0gbnVsbDtcblxuICAgIHdoaWxlICh0aW1lcyA8IG4gJiYgaW5kZXggIT09IC0xKSB7XG4gICAgICAgIGluZGV4ID0gc3RyLmluZGV4T2Yoc3Vic3RyaW5nLCAoaW5kZXggfHwgMCkgKyAxKTtcbiAgICAgICAgdGltZXMrKztcbiAgICB9XG4gICAgcmV0dXJuIGluZGV4O1xufTtcblxuZXhwb3J0IGludGVyZmFjZSBTaWduYXR1cmUge1xuICAgIEJ5dGVSYW5nZTogTnVtYmVyW107XG4gICAgc2lnbmF0dXJlOiBzdHJpbmc7IC8vIG9mIEJ1ZmZlcj9cbiAgICBzaWduZWREYXRhOiBCdWZmZXI7XG59XG5cbi8qKlxuICogQmFzaWMgaW1wbGVtZW50YXRpb24gb2Ygc2lnbmF0dXJlIGV4dHJhY3Rpb24uXG4gKlxuICogUmVhbGx5IGJhc2ljLiBXb3VsZCB3b3JrIGluIHRoZSBzaW1wbGVzdCBvZiBjYXNlcyB3aGVyZSB0aGVyZSBpcyBvbmx5IG9uZSBzaWduYXR1cmVcbiAqIGluIGEgZG9jdW1lbnQgYW5kIEJ5dGVSYW5nZSBpcyBvbmx5IHVzZWQgb25jZSBpbiBpdC5cbiAqXG4gKiBAcGFyYW0ge0J1ZmZlcn0gcGRmXG4gKiBAcmV0dXJucyB7U2lnbmF0dXJlfSB7Qnl0ZVJhbmdlOiBOdW1iZXJbXSwgc2lnbmF0dXJlOiBCdWZmZXIsIHNpZ25lZERhdGE6IEJ1ZmZlcn1cbiAqL1xuZXhwb3J0IGZ1bmN0aW9uIGV4dHJhY3RTaWduYXR1cmUocGRmOiBCdWZmZXIsIHNpZ25hdHVyZUNvdW50ID0gMSk6IFNpZ25hdHVyZSB7XG4gICAgaWYgKCEocGRmIGluc3RhbmNlb2YgQnVmZmVyKSkge1xuICAgICAgICB0aHJvdyBuZXcgU2lnblBkZkVycm9yKFxuICAgICAgICAgICAgJ1BERiBleHBlY3RlZCBhcyBCdWZmZXIuJyxcbiAgICAgICAgICAgIEVSUk9SX1RZUEVfSU5QVVQsXG4gICAgICAgICk7XG4gICAgfVxuXG4gICAgLy8gY29uc3QgYnl0ZVJhbmdlUG9zID0gcGRmLmluZGV4T2YoJy9CeXRlUmFuZ2UgWycpO1xuICAgIGNvbnN0IGJ5dGVSYW5nZVBvcyA9IGdldFN1YnN0cmluZ0luZGV4KHBkZiwgJy9CeXRlUmFuZ2UgWycsIHNpZ25hdHVyZUNvdW50KTtcbiAgICBpZiAoIWJ5dGVSYW5nZVBvcyB8fCBieXRlUmFuZ2VQb3MgPT09IC0xKSB7XG4gICAgICAgIHRocm93IG5ldyBTaWduUGRmRXJyb3IoXG4gICAgICAgICAgICAnRmFpbGVkIHRvIGxvY2F0ZSBCeXRlUmFuZ2UuJyxcbiAgICAgICAgICAgIEVSUk9SX1RZUEVfUEFSU0UsXG4gICAgICAgICk7XG4gICAgfVxuXG4gICAgY29uc3QgYnl0ZVJhbmdlRW5kID0gcGRmLmluZGV4T2YoJ10nLCBieXRlUmFuZ2VQb3MpO1xuICAgIGlmICghYnl0ZVJhbmdlRW5kIHx8IGJ5dGVSYW5nZUVuZCA9PT0gLTEpIHtcbiAgICAgICAgdGhyb3cgbmV3IFNpZ25QZGZFcnJvcihcbiAgICAgICAgICAgICdGYWlsZWQgdG8gbG9jYXRlIHRoZSBlbmQgb2YgdGhlIEJ5dGVSYW5nZS4nLFxuICAgICAgICAgICAgRVJST1JfVFlQRV9QQVJTRSxcbiAgICAgICAgKTtcbiAgICB9XG5cbiAgICBjb25zdCBieXRlUmFuZ2UgPSBwZGYuc2xpY2UoYnl0ZVJhbmdlUG9zLCBieXRlUmFuZ2VFbmQgKyAxKS50b1N0cmluZygpO1xuICAgIGNvbnN0IG1hdGNoZXMgPSAoL1xcL0J5dGVSYW5nZSBcXFsoXFxkKykgKyhcXGQrKSArKFxcZCspICsoXFxkKykgKlxcXS8pLmV4ZWMoYnl0ZVJhbmdlKTtcbiAgICBpZiAobWF0Y2hlcyA9PT0gbnVsbCkge1xuICAgICAgICB0aHJvdyBuZXcgU2lnblBkZkVycm9yKFxuICAgICAgICAgICAgJ0ZhaWxlZCB0byBwYXJzZSB0aGUgQnl0ZVJhbmdlLicsXG4gICAgICAgICAgICBFUlJPUl9UWVBFX1BBUlNFLFxuICAgICAgICApO1xuICAgIH1cblxuICAgIGNvbnN0IEJ5dGVSYW5nZSA9IG1hdGNoZXMuc2xpY2UoMSkubWFwKE51bWJlcik7XG4gICAgY29uc3Qgc2lnbmVkRGF0YSA9IEJ1ZmZlci5jb25jYXQoW1xuICAgICAgICBwZGYuc2xpY2UoQnl0ZVJhbmdlWzBdLCBCeXRlUmFuZ2VbMF0gKyBCeXRlUmFuZ2VbMV0pLFxuICAgICAgICBwZGYuc2xpY2UoQnl0ZVJhbmdlWzJdLCBCeXRlUmFuZ2VbMl0gKyBCeXRlUmFuZ2VbM10pLFxuICAgIF0pO1xuXG4gICAgY29uc3Qgc2lnbmF0dXJlSGV4ID0gcGRmLnNsaWNlKEJ5dGVSYW5nZVswXSArIEJ5dGVSYW5nZVsxXSArIDEsIEJ5dGVSYW5nZVsyXSlcbiAgICAgICAgLnRvU3RyaW5nKCdiaW5hcnknKVxuICAgICAgICAucmVwbGFjZSgvKD86MDB8PikrJC8sICcnKTtcblxuICAgIGNvbnN0IHNpZ25hdHVyZSA9IEJ1ZmZlci5mcm9tKHNpZ25hdHVyZUhleCwgJ2hleCcpLnRvU3RyaW5nKCdiaW5hcnknKTtcblxuICAgIHJldHVybiB7XG4gICAgICAgIEJ5dGVSYW5nZTogbWF0Y2hlcy5zbGljZSgxLCA1KS5tYXAoTnVtYmVyKSxcbiAgICAgICAgc2lnbmF0dXJlLFxuICAgICAgICBzaWduZWREYXRhLFxuICAgIH07XG59XG4iXX0=

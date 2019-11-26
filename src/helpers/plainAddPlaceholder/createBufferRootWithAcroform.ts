@@ -1,0 +1,14 @@
+import { getIndexFromRef } from './getIndexFromRef';
+import { PdfInfo } from './readPdf';
+
+export function createBufferRootWithAcroform(pdf: Buffer, info: PdfInfo, form: any): Buffer {
+    const rootIndex = getIndexFromRef(info.xref, info.rootRef);
+
+    return Buffer.concat([
+        Buffer.from(`${rootIndex} 0 obj\n`),
+        Buffer.from('<<\n'),
+        Buffer.from(`${info.root}\n`),
+        Buffer.from(`/AcroForm ${form}`),
+        Buffer.from('\n>>\nendobj\n'),
+    ]);
+}

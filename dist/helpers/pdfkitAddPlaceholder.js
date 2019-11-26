@@ -1,18 +1,11 @@
 "use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _const = require("./const");
-
-var _pdfkitReferenceMock = _interopRequireDefault(require("./pdfkitReferenceMock"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-// eslint-disable-next-line import/no-unresolved
-
+Object.defineProperty(exports, "__esModule", { value: true });
+const const_1 = require("./const");
+const pdfkitReferenceMock_1 = require("./pdfkitReferenceMock");
+const defaultOpts = {
+    signatureLength: const_1.DEFAULT_SIGNATURE_LENGTH,
+    byteRangePlaceholder: const_1.DEFAULT_BYTE_RANGE_PLACEHOLDER
+};
 /**
  * Adds the objects that are needed for Adobe.PPKLite to read the signature.
  * Also includes a placeholder for the actual signature.
@@ -21,88 +14,80 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * @param {string} reason
  * @returns {object}
  */
-const pdfkitAddPlaceholder = ({
-  pdf,
-  pdfBuffer,
-  reason,
-  signatureLength = _const.DEFAULT_SIGNATURE_LENGTH,
-  byteRangePlaceholder = _const.DEFAULT_BYTE_RANGE_PLACEHOLDER
-}) => {
-  /* eslint-disable no-underscore-dangle,no-param-reassign */
-  // Generate the signature placeholder
-  const signature = pdf.ref({
-    Type: 'Sig',
-    Filter: 'Adobe.PPKLite',
-    SubFilter: 'adbe.pkcs7.detached',
-    ByteRange: [0, byteRangePlaceholder, byteRangePlaceholder, byteRangePlaceholder],
-    Contents: Buffer.from(String.fromCharCode(0).repeat(signatureLength)),
-    Reason: new String(reason),
-    // eslint-disable-line no-new-wrappers
-    M: new Date(),
-    ContactInfo: new String('emailfromp1289@gmail.com'),
-    // eslint-disable-line no-new-wrappers
-    Name: new String('Name from p12'),
-    // eslint-disable-line no-new-wrappers
-    Location: new String('Location from p12') // eslint-disable-line no-new-wrappers
-
-  }); // Check if pdf already contains acroform field
-
-  const acroFormPosition = pdfBuffer.lastIndexOf('/Type /AcroForm');
-  const isAcroFormExists = acroFormPosition !== -1;
-  let fieldIds = [];
-  let acroFormId;
-
-  if (isAcroFormExists) {
-    const pdfSlice = pdfBuffer.slice(acroFormPosition - 12);
-    const acroForm = pdfSlice.slice(0, pdfSlice.indexOf('endobj')).toString();
-    const acroFormFirsRow = acroForm.split('\n')[0];
-    acroFormId = parseInt(acroFormFirsRow.split(' ')[0]);
-    const acroFormFields = acroForm.slice(acroForm.indexOf('/Fields [') + 9, acroForm.indexOf(']'));
-    fieldIds = acroFormFields.split(' ').filter((element, index) => index % 3 === 0).map(fieldId => new _pdfkitReferenceMock.default(fieldId));
-  }
-
-  const signatureName = 'Signature'; // Generate signature annotation widget
-
-  const widget = pdf.ref({
-    Type: 'Annot',
-    Subtype: 'Widget',
-    FT: 'Sig',
-    Rect: [0, 0, 0, 0],
-    V: signature,
-    T: new String(signatureName + (fieldIds.length + 1)),
-    // eslint-disable-line no-new-wrappers
-    F: 4,
-    P: pdf.page.dictionary // eslint-disable-line no-underscore-dangle
-
-  });
-  pdf.page.dictionary.data.Annots = [widget]; // Include the widget in a page
-
-  let form;
-
-  if (!isAcroFormExists) {
-    // Create a form (with the widget) and link in the _root
-    form = pdf.ref({
-      Type: 'AcroForm',
-      SigFlags: 3,
-      Fields: [...fieldIds, widget]
+function pdfkitAddPlaceholder(opts) {
+    const { pdf, pdfBuffer, reason, signatureLength, byteRangePlaceholder } = { ...defaultOpts, ...opts };
+    // Generate the signature placeholder
+    const signature = pdf.ref({
+        Type: 'Sig',
+        Filter: 'Adobe.PPKLite',
+        SubFilter: 'adbe.pkcs7.detached',
+        ByteRange: [
+            0,
+            byteRangePlaceholder,
+            byteRangePlaceholder,
+            byteRangePlaceholder,
+        ],
+        Contents: Buffer.from(String.fromCharCode(0).repeat(signatureLength)),
+        // tslint:disable:no-construct
+        Reason: new String(reason),
+        M: new Date(),
+        ContactInfo: new String('emailfromp1289@gmail.com'),
+        Name: new String('Name from p12'),
+        Location: new String('Location from p12'),
     });
-  } else {
-    // Use existing acroform and extend the fields with newly created widgets
-    form = pdf.ref({
-      Type: 'AcroForm',
-      SigFlags: 3,
-      Fields: [...fieldIds, widget]
-    }, acroFormId);
-  }
-
-  pdf._root.data.AcroForm = form;
-  return {
-    signature,
-    form,
-    widget
-  };
-  /* eslint-enable no-underscore-dangle,no-param-reassign */
-};
-
-var _default = pdfkitAddPlaceholder;
-exports.default = _default;
+    // Check if pdf already contains acroform field
+    const acroFormPosition = pdfBuffer.lastIndexOf('/Type /AcroForm');
+    const isAcroFormExists = acroFormPosition !== -1;
+    let fieldIds = [];
+    let acroFormId;
+    if (isAcroFormExists) {
+        const pdfSlice = pdfBuffer.slice(acroFormPosition - 12);
+        const acroForm = pdfSlice.slice(0, pdfSlice.indexOf('endobj')).toString();
+        const acroFormFirsRow = acroForm.split('\n')[0];
+        acroFormId = parseInt(acroFormFirsRow.split(' ')[0]);
+        const acroFormFields = acroForm.slice(acroForm.indexOf('/Fields [') + 9, acroForm.indexOf(']'));
+        fieldIds = acroFormFields
+            .split(' ')
+            .filter((element, index) => index % 3 === 0)
+            .map(fieldId => new pdfkitReferenceMock_1.PDFKitReferenceMock(fieldId));
+    }
+    const signatureName = 'Signature';
+    // Generate signature annotation widget
+    const widget = pdf.ref({
+        Type: 'Annot',
+        Subtype: 'Widget',
+        FT: 'Sig',
+        Rect: [0, 0, 0, 0],
+        V: signature,
+        T: new String(signatureName + (fieldIds.length + 1)),
+        F: 4,
+        P: pdf.page.dictionary
+    });
+    pdf.page.dictionary.data.Annots = [widget];
+    // Include the widget in a page
+    let form;
+    if (!isAcroFormExists) {
+        // Create a form (with the widget) and link in the _root
+        form = pdf.ref({
+            Type: 'AcroForm',
+            SigFlags: 3,
+            Fields: [...fieldIds, widget],
+        });
+    }
+    else {
+        // Use existing acroform and extend the fields with newly created widgets
+        form = pdf.ref({
+            Type: 'AcroForm',
+            SigFlags: 3,
+            Fields: [...fieldIds, widget],
+        }, acroFormId);
+    }
+    pdf._root.data.AcroForm = form;
+    return {
+        signature,
+        form,
+        widget,
+    };
+}
+exports.pdfkitAddPlaceholder = pdfkitAddPlaceholder;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicGRma2l0QWRkUGxhY2Vob2xkZXIuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi9zcmMvaGVscGVycy9wZGZraXRBZGRQbGFjZWhvbGRlci50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOztBQUFBLG1DQUFtRjtBQUVuRiwrREFBNEQ7QUFVNUQsTUFBTSxXQUFXLEdBQUc7SUFDaEIsZUFBZSxFQUFFLGdDQUF3QjtJQUN6QyxvQkFBb0IsRUFBRSxzQ0FBOEI7Q0FDdkQsQ0FBQztBQUVGOzs7Ozs7O0dBT0c7QUFDSCxTQUFnQixvQkFBb0IsQ0FBQyxJQUE4QjtJQUUvRCxNQUFNLEVBQUUsR0FBRyxFQUFFLFNBQVMsRUFBRSxNQUFNLEVBQUUsZUFBZSxFQUFFLG9CQUFvQixFQUFFLEdBQUcsRUFBRSxHQUFHLFdBQVcsRUFBRSxHQUFHLElBQUksRUFBRSxDQUFDO0lBRXRHLHFDQUFxQztJQUNyQyxNQUFNLFNBQVMsR0FBRyxHQUFHLENBQUMsR0FBRyxDQUFDO1FBQ3RCLElBQUksRUFBRSxLQUFLO1FBQ1gsTUFBTSxFQUFFLGVBQWU7UUFDdkIsU0FBUyxFQUFFLHFCQUFxQjtRQUNoQyxTQUFTLEVBQUU7WUFDUCxDQUFDO1lBQ0Qsb0JBQW9CO1lBQ3BCLG9CQUFvQjtZQUNwQixvQkFBb0I7U0FDdkI7UUFDRCxRQUFRLEVBQUUsTUFBTSxDQUFDLElBQUksQ0FBQyxNQUFNLENBQUMsWUFBWSxDQUFDLENBQUMsQ0FBQyxDQUFDLE1BQU0sQ0FBQyxlQUFlLENBQUMsQ0FBQztRQUNyRSw4QkFBOEI7UUFDOUIsTUFBTSxFQUFFLElBQUksTUFBTSxDQUFDLE1BQU0sQ0FBQztRQUMxQixDQUFDLEVBQUUsSUFBSSxJQUFJLEVBQUU7UUFDYixXQUFXLEVBQUUsSUFBSSxNQUFNLENBQUMsMEJBQTBCLENBQUM7UUFDbkQsSUFBSSxFQUFFLElBQUksTUFBTSxDQUFDLGVBQWUsQ0FBQztRQUNqQyxRQUFRLEVBQUUsSUFBSSxNQUFNLENBQUMsbUJBQW1CLENBQUM7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QUk7UUFDSixNQUFNO0tBQ1QsQ0FBQztBQUNOLENBQUM7QUFqRkQsb0RBaUZDIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgREVGQVVMVF9CWVRFX1JBTkdFX1BMQUNFSE9MREVSLCBERUZBVUxUX1NJR05BVFVSRV9MRU5HVEggfSBmcm9tICcuL2NvbnN0JztcblxuaW1wb3J0IHsgUERGS2l0UmVmZXJlbmNlTW9jayB9IGZyb20gJy4vcGRma2l0UmVmZXJlbmNlTW9jayc7XG5cbmV4cG9ydCBpbnRlcmZhY2UgUERGS2l0QWRkUGxhY2Vob2xkZXJPcHRzIHtcbiAgICBwZGY6IGFueTtcbiAgICBwZGZCdWZmZXI6IEJ1ZmZlcjtcbiAgICByZWFzb24/OiBzdHJpbmc7XG4gICAgc2lnbmF0dXJlTGVuZ3RoPzogbnVtYmVyO1xuICAgIGJ5dGVSYW5nZVBsYWNlaG9sZGVyPzogc3RyaW5nO1xufVxuXG5jb25zdCBkZWZhdWx0T3B0cyA9IHtcbiAgICBzaWduYXR1cmVMZW5ndGg6IERFRkFVTFRfU0lHTkFUVVJFX0xFTkdUSCxcbiAgICBieXRlUmFuZ2VQbGFjZWhvbGRlcjogREVGQVVMVF9CWVRFX1JBTkdFX1BMQUNFSE9MREVSXG59O1xuXG4vKipcbiAqIEFkZHMgdGhlIG9iamVjdHMgdGhhdCBhcmUgbmVlZGVkIGZvciBBZG9iZS5QUEtMaXRlIHRvIHJlYWQgdGhlIHNpZ25hdHVyZS5cbiAqIEFsc28gaW5jbHVkZXMgYSBwbGFjZWhvbGRlciBmb3IgdGhlIGFjdHVhbCBzaWduYXR1cmUuXG4gKiBSZXR1cm5zIGFuIE9iamVjdCB3aXRoIGFsbCB0aGUgYWRkZWQgUERGUmVmZXJlbmNlcy5cbiAqIEBwYXJhbSB7UERGRG9jdW1lbnR9IHBkZlxuICogQHBhcmFtIHtzdHJpbmd9IHJlYXNvblxuICogQHJldHVybnMge29iamVjdH1cbiAqL1xuZXhwb3J0IGZ1bmN0aW9uIHBkZmtpdEFkZFBsYWNlaG9sZGVyKG9wdHM6IFBERktpdEFkZFBsYWNlaG9sZGVyT3B0cyk6IGFueSB7XG5cbiAgICBjb25zdCB7IHBkZiwgcGRmQnVmZmVyLCByZWFzb24sIHNpZ25hdHVyZUxlbmd0aCwgYnl0ZVJhbmdlUGxhY2Vob2xkZXIgfSA9IHsgLi4uZGVmYXVsdE9wdHMsIC4uLm9wdHMgfTtcblxuICAgIC8vIEdlbmVyYXRlIHRoZSBzaWduYXR1cmUgcGxhY2Vob2xkZXJcbiAgICBjb25zdCBzaWduYXR1cmUgPSBwZGYucmVmKHtcbiAgICAgICAgVHlwZTogJ1NpZycsXG4gICAgICAgIEZpbHRlcjogJ0Fkb2JlLlBQS0xpdGUnLFxuICAgICAgICBTdWJGaWx0ZXI6ICdhZGJlLnBrY3M3LmRldGFjaGVkJyxcbiAgICAgICAgQnl0ZVJhbmdlOiBbXG4gICAgICAgICAgICAwLFxuICAgICAgICAgICAgYnl0ZVJhbmdlUGxhY2Vob2xkZXIsXG4gICAgICAgICAgICBieXRlUmFuZ2VQbGFjZWhvbGRlcixcbiAgICAgICAgICAgIGJ5dGVSYW5nZVBsYWNlaG9sZGVyLFxuICAgICAgICBdLFxuICAgICAgICBDb250ZW50czogQnVmZmVyLmZyb20oU3RyaW5nLmZyb21DaGFyQ29kZSgwKS5yZXBlYXQoc2lnbmF0dXJlTGVuZ3RoKSksXG4gICAgICAgIC8vIHRzbGludDpkaXNhYmxlOm5vLWNvbnN0cnVjdFxuICAgICAgICBSZWFzb246IG5ldyBTdHJpbmcocmVhc29uKSxcbiAgICAgICAgTTogbmV3IERhdGUoKSxcbiAgICAgICAgQ29udGFjdEluZm86IG5ldyBTdHJpbmcoJ2VtYWlsZnJvbXAxMjg5QGdtYWlsLmNvbScpLFxuICAgICAgICBOYW1lOiBuZXcgU3RyaW5nKCdOYW1lIGZyb20gcDEyJyksXG4gICAgICAgIExvY2F0aW9uOiBuZXcgU3RyaW5nKCdMb2NhdGlvbiBmcm9tIHAxMicpLFxuICAgIH0pO1xuXG4gICAgLy8gQ2hlY2sgaWYgcGRmIGFscmVhZHkgY29udGFpbnMgYWNyb2Zvcm0gZmllbGRcbiAgICBjb25zdCBhY3JvRm9ybVBvc2l0aW9uID0gcGRmQnVmZmVyLmxhc3RJbmRleE9mKCcvVHlwZSAvQWNyb0Zvcm0nKTtcbiAgICBjb25zdCBpc0Fjcm9Gb3JtRXhpc3RzID0gYWNyb0Zvcm1Qb3NpdGlvbiAhPT0gLTE7XG4gICAgbGV0IGZpZWxkSWRzOiBhbnlbXSA9IFtdO1xuICAgIGxldCBhY3JvRm9ybUlkO1xuXG4gICAgaWYgKGlzQWNyb0Zvcm1FeGlzdHMpIHtcbiAgICAgICAgY29uc3QgcGRmU2xpY2UgPSBwZGZCdWZmZXIuc2xpY2UoYWNyb0Zvcm1Qb3NpdGlvbiAtIDEyKTtcbiAgICAgICAgY29uc3QgYWNyb0Zvcm0gPSBwZGZTbGljZS5zbGljZSgwLCBwZGZTbGljZS5pbmRleE9mKCdlbmRvYmonKSkudG9TdHJpbmcoKTtcbiAgICAgICAgY29uc3QgYWNyb0Zvcm1GaXJzUm93ID0gYWNyb0Zvcm0uc3BsaXQoJ1xcbicpWzBdO1xuICAgICAgICBhY3JvRm9ybUlkID0gcGFyc2VJbnQoYWNyb0Zvcm1GaXJzUm93LnNwbGl0KCcgJylbMF0pO1xuXG4gICAgICAgIGNvbnN0IGFjcm9Gb3JtRmllbGRzID0gYWNyb0Zvcm0uc2xpY2UoYWNyb0Zvcm0uaW5kZXhPZignL0ZpZWxkcyBbJykgKyA5LCBhY3JvRm9ybS5pbmRleE9mKCddJykpO1xuICAgICAgICBmaWVsZElkcyA9IGFjcm9Gb3JtRmllbGRzXG4gICAgICAgICAgICAuc3BsaXQoJyAnKVxuICAgICAgICAgICAgLmZpbHRlcigoZWxlbWVudCwgaW5kZXgpID0+IGluZGV4ICUgMyA9PT0gMClcbiAgICAgICAgICAgIC5tYXAoZmllbGRJZCA9PiBuZXcgUERGS2l0UmVmZXJlbmNlTW9jayhmaWVsZElkKSk7XG4gICAgfVxuICAgIGNvbnN0IHNpZ25hdHVyZU5hbWUgPSAnU2lnbmF0dXJlJztcblxuICAgIC8vIEdlbmVyYXRlIHNpZ25hdHVyZSBhbm5vdGF0aW9uIHdpZGdldFxuICAgIGNvbnN0IHdpZGdldCA9IHBkZi5yZWYoe1xuICAgICAgICBUeXBlOiAnQW5ub3QnLFxuICAgICAgICBTdWJ0eXBlOiAnV2lkZ2V0JyxcbiAgICAgICAgRlQ6ICdTaWcnLFxuICAgICAgICBSZWN0OiBbMCwgMCwgMCwgMF0sXG4gICAgICAgIFY6IHNpZ25hdHVyZSxcbiAgICAgICAgVDogbmV3IFN0cmluZyhzaWduYXR1cmVOYW1lICsgKGZpZWxkSWRzLmxlbmd0aCArIDEpKSxcbiAgICAgICAgRjogNCxcbiAgICAgICAgUDogcGRmLnBhZ2UuZGljdGlvbmFyeVxuICAgIH0pO1xuICAgIHBkZi5wYWdlLmRpY3Rpb25hcnkuZGF0YS5Bbm5vdHMgPSBbd2lkZ2V0XTtcbiAgICAvLyBJbmNsdWRlIHRoZSB3aWRnZXQgaW4gYSBwYWdlXG4gICAgbGV0IGZvcm07XG5cbiAgICBpZiAoIWlzQWNyb0Zvcm1FeGlzdHMpIHtcbiAgICAgICAgLy8gQ3JlYXRlIGEgZm9ybSAod2l0aCB0aGUgd2lkZ2V0KSBhbmQgbGluayBpbiB0aGUgX3Jvb3RcbiAgICAgICAgZm9ybSA9IHBkZi5yZWYoe1xuICAgICAgICAgICAgVHlwZTogJ0Fjcm9Gb3JtJyxcbiAgICAgICAgICAgIFNpZ0ZsYWdzOiAzLFxuICAgICAgICAgICAgRmllbGRzOiBbLi4uZmllbGRJZHMsIHdpZGdldF0sXG4gICAgICAgIH0pO1xuICAgIH0gZWxzZSB7XG4gICAgICAgIC8vIFVzZSBleGlzdGluZyBhY3JvZm9ybSBhbmQgZXh0ZW5kIHRoZSBmaWVsZHMgd2l0aCBuZXdseSBjcmVhdGVkIHdpZGdldHNcbiAgICAgICAgZm9ybSA9IHBkZi5yZWYoe1xuICAgICAgICAgICAgVHlwZTogJ0Fjcm9Gb3JtJyxcbiAgICAgICAgICAgIFNpZ0ZsYWdzOiAzLFxuICAgICAgICAgICAgRmllbGRzOiBbLi4uZmllbGRJZHMsIHdpZGdldF0sXG4gICAgICAgIH0sIGFjcm9Gb3JtSWQpO1xuICAgIH1cbiAgICBwZGYuX3Jvb3QuZGF0YS5BY3JvRm9ybSA9IGZvcm07XG5cbiAgICByZXR1cm4ge1xuICAgICAgICBzaWduYXR1cmUsXG4gICAgICAgIGZvcm0sXG4gICAgICAgIHdpZGdldCxcbiAgICB9O1xufVxuIl19

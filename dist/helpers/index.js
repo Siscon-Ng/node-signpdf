@@ -1,41 +1,12 @@
 "use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-Object.defineProperty(exports, "extractSignature", {
-  enumerable: true,
-  get: function () {
-    return _extractSignature.default;
-  }
-});
-Object.defineProperty(exports, "pdfkitAddPlaceholder", {
-  enumerable: true,
-  get: function () {
-    return _pdfkitAddPlaceholder.default;
-  }
-});
-Object.defineProperty(exports, "plainAddPlaceholder", {
-  enumerable: true,
-  get: function () {
-    return _plainAddPlaceholder.default;
-  }
-});
-Object.defineProperty(exports, "removeTrailingNewLine", {
-  enumerable: true,
-  get: function () {
-    return _removeTrailingNewLine.default;
-  }
-});
-
-var _extractSignature = _interopRequireDefault(require("./extractSignature"));
-
-var _pdfkitAddPlaceholder = _interopRequireDefault(require("./pdfkitAddPlaceholder"));
-
-var _plainAddPlaceholder = _interopRequireDefault(require("./plainAddPlaceholder"));
-
-var _removeTrailingNewLine = _interopRequireDefault(require("./removeTrailingNewLine"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-'This string is added so that jest collects coverage for this file'; // eslint-disable-line
+Object.defineProperty(exports, "__esModule", { value: true });
+var extractSignature_1 = require("./extractSignature");
+exports.extractSignature = extractSignature_1.extractSignature;
+var pdfkitAddPlaceholder_1 = require("./pdfkitAddPlaceholder");
+exports.pdfkitAddPlaceholder = pdfkitAddPlaceholder_1.pdfkitAddPlaceholder;
+var plainAddPlaceholder_1 = require("./plainAddPlaceholder");
+exports.plainAddPlaceholder = plainAddPlaceholder_1.plainAddPlaceholder;
+var removeTrailingNewLine_1 = require("./removeTrailingNewLine");
+exports.removeTrailingNewLine = removeTrailingNewLine_1.removeTrailingNewLine;
+'This string is added so that jest collects coverage for this file'; // tslint:disable-line
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5kZXguanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi9zcmMvaGVscGVycy9pbmRleC50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOztBQUFBLHVEQUFzRDtBQUE3Qyw4Q0FBQSxnQkFBZ0IsQ0FBQTtBQUN6QiwrREFBOEQ7QUFBckQsc0RBQUEsb0JBQW9CLENBQUE7QUFDN0IsNkRBQTREO0FBQW5ELG9EQUFBLG1CQUFtQixDQUFBO0FBQzVCLGlFQUFnRTtBQUF2RCx3REFBQSxxQkFBcUIsQ0FBQTtBQUU5QixtRUFBbUUsQ0FBQyxDQUFDLHNCQUFzQiIsInNvdXJjZXNDb250ZW50IjpbImV4cG9ydCB7IGV4dHJhY3RTaWduYXR1cmUgfSBmcm9tICcuL2V4dHJhY3RTaWduYXR1cmUnO1xuZXhwb3J0IHsgcGRma2l0QWRkUGxhY2Vob2xkZXIgfSBmcm9tICcuL3BkZmtpdEFkZFBsYWNlaG9sZGVyJztcbmV4cG9ydCB7IHBsYWluQWRkUGxhY2Vob2xkZXIgfSBmcm9tICcuL3BsYWluQWRkUGxhY2Vob2xkZXInO1xuZXhwb3J0IHsgcmVtb3ZlVHJhaWxpbmdOZXdMaW5lIH0gZnJvbSAnLi9yZW1vdmVUcmFpbGluZ05ld0xpbmUnO1xuXG4nVGhpcyBzdHJpbmcgaXMgYWRkZWQgc28gdGhhdCBqZXN0IGNvbGxlY3RzIGNvdmVyYWdlIGZvciB0aGlzIGZpbGUnOyAvLyB0c2xpbnQ6ZGlzYWJsZS1saW5lXG4iXX0=

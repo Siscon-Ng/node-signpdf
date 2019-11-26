@@ -1,29 +1,20 @@
 "use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _getIndexFromRef = _interopRequireDefault(require("./getIndexFromRef"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
+Object.defineProperty(exports, "__esModule", { value: true });
+const getIndexFromRef_1 = require("./getIndexFromRef");
 /**
  * @param {Buffer} pdf
- * @param {Map} refTable
- * @returns {object}
+ * @param {RefTable} refTable
+ * @returns {Buffer}
  */
-const findObject = (pdf, refTable, ref) => {
-  const index = (0, _getIndexFromRef.default)(refTable, ref);
-  const offset = refTable.offsets.get(index);
-  let slice = pdf.slice(offset);
-  slice = slice.slice(0, slice.indexOf('endobj')); // FIXME: What if it is a stream?
-
-  slice = slice.slice(slice.indexOf('<<') + 2);
-  slice = slice.slice(0, slice.lastIndexOf('>>'));
-  return slice;
-};
-
-var _default = findObject;
-exports.default = _default;
+function findObject(pdf, refTable, ref) {
+    const index = getIndexFromRef_1.getIndexFromRef(refTable, ref);
+    const offset = refTable.offsets.get(index);
+    let slice = pdf.slice(offset);
+    slice = slice.slice(0, slice.indexOf('endobj'));
+    // FIXME: What if it is a stream?
+    slice = slice.slice(slice.indexOf('<<') + 2);
+    slice = slice.slice(0, slice.lastIndexOf('>>'));
+    return slice;
+}
+exports.findObject = findObject;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZmluZE9iamVjdC5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9oZWxwZXJzL3BsYWluQWRkUGxhY2Vob2xkZXIvZmluZE9iamVjdC50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOztBQUFBLHVEQUFvRDtBQUdwRDs7OztHQUlHO0FBQ0gsU0FBZ0IsVUFBVSxDQUFDLEdBQVcsRUFBRSxRQUFrQixFQUFFLEdBQVc7SUFDbkUsTUFBTSxLQUFLLEdBQUcsaUNBQWUsQ0FBQyxRQUFRLEVBQUUsR0FBRyxDQUFDLENBQUM7SUFFN0MsTUFBTSxNQUFNLEdBQUcsUUFBUSxDQUFDLE9BQU8sQ0FBQyxHQUFHLENBQUMsS0FBSyxDQUFDLENBQUM7SUFDM0MsSUFBSSxLQUFLLEdBQUcsR0FBRyxDQUFDLEtBQUssQ0FBQyxNQUFNLENBQUMsQ0FBQztJQUM5QixLQUFLLEdBQUcsS0FBSyxDQUFDLEtBQUssQ0FBQyxDQUFDLEVBQUUsS0FBSyxDQUFDLE9BQU8sQ0FBQyxRQUFRLENBQUMsQ0FBQyxDQUFDO0lBRWhELGlDQUFpQztJQUNqQyxLQUFLLEdBQUcsS0FBSyxDQUFDLEtBQUssQ0FBQyxLQUFLLENBQUMsT0FBTyxDQUFDLElBQUksQ0FBQyxHQUFHLENBQUMsQ0FBQyxDQUFDO0lBQzdDLEtBQUssR0FBRyxLQUFLLENBQUMsS0FBSyxDQUFDLENBQUMsRUFBRSxLQUFLLENBQUMsV0FBVyxDQUFDLElBQUksQ0FBQyxDQUFDLENBQUM7SUFDaEQsT0FBTyxLQUFLLENBQUM7QUFDakIsQ0FBQztBQVhELGdDQVdDIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgZ2V0SW5kZXhGcm9tUmVmIH0gZnJvbSAnLi9nZXRJbmRleEZyb21SZWYnO1xuaW1wb3J0IHsgUmVmVGFibGUgfSBmcm9tICcuL3JlYWRSZWZUYWJsZSc7XG5cbi8qKlxuICogQHBhcmFtIHtCdWZmZXJ9IHBkZlxuICogQHBhcmFtIHtSZWZUYWJsZX0gcmVmVGFibGVcbiAqIEByZXR1cm5zIHtCdWZmZXJ9XG4gKi9cbmV4cG9ydCBmdW5jdGlvbiBmaW5kT2JqZWN0KHBkZjogQnVmZmVyLCByZWZUYWJsZTogUmVmVGFibGUsIHJlZjogc3RyaW5nKTogQnVmZmVyIHtcbiAgICBjb25zdCBpbmRleCA9IGdldEluZGV4RnJvbVJlZihyZWZUYWJsZSwgcmVmKTtcblxuICAgIGNvbnN0IG9mZnNldCA9IHJlZlRhYmxlLm9mZnNldHMuZ2V0KGluZGV4KTtcbiAgICBsZXQgc2xpY2UgPSBwZGYuc2xpY2Uob2Zmc2V0KTtcbiAgICBzbGljZSA9IHNsaWNlLnNsaWNlKDAsIHNsaWNlLmluZGV4T2YoJ2VuZG9iaicpKTtcblxuICAgIC8vIEZJWE1FOiBXaGF0IGlmIGl0IGlzIGEgc3RyZWFtP1xuICAgIHNsaWNlID0gc2xpY2Uuc2xpY2Uoc2xpY2UuaW5kZXhPZignPDwnKSArIDIpO1xuICAgIHNsaWNlID0gc2xpY2Uuc2xpY2UoMCwgc2xpY2UubGFzdEluZGV4T2YoJz4+JykpO1xuICAgIHJldHVybiBzbGljZTtcbn1cbiJdfQ==

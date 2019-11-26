@@ -1,14 +1,6 @@
 "use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _SignPdfError = _interopRequireDefault(require("../SignPdfError"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
+Object.defineProperty(exports, "__esModule", { value: true });
+const SignPdfError_1 = require("../SignPdfError");
 /**
  * Removes a trailing new line if there is such.
  *
@@ -16,27 +8,21 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * @param {Buffer} pdf
  * @returns {Buffer}
  */
-const removeTrailingNewLine = pdf => {
-  if (!(pdf instanceof Buffer)) {
-    throw new _SignPdfError.default('PDF expected as Buffer.', _SignPdfError.default.TYPE_INPUT);
-  }
-
-  const lastChar = pdf.slice(pdf.length - 1).toString();
-  let output = pdf;
-
-  if (lastChar === '\n') {
-    // remove the trailing new line
-    output = pdf.slice(0, pdf.length - 1);
-  }
-
-  const lastLine = output.slice(output.length - 6).toString();
-
-  if (lastLine !== '\n%%EOF') {
-    throw new _SignPdfError.default('A PDF file must end with an EOF line.', _SignPdfError.default.TYPE_PARSE);
-  }
-
-  return output;
-};
-
-var _default = removeTrailingNewLine;
-exports.default = _default;
+function removeTrailingNewLine(pdf) {
+    if (!(pdf instanceof Buffer)) {
+        throw new SignPdfError_1.SignPdfError('PDF expected as Buffer.', SignPdfError_1.ERROR_TYPE_INPUT);
+    }
+    const lastChar = pdf.slice(pdf.length - 1).toString();
+    let output = pdf;
+    if (lastChar === '\n') {
+        // remove the trailing new line
+        output = pdf.slice(0, pdf.length - 1);
+    }
+    const lastLine = output.slice(output.length - 6).toString();
+    if (lastLine !== '\n%%EOF') {
+        throw new SignPdfError_1.SignPdfError('A PDF file must end with an EOF line.', SignPdfError_1.ERROR_TYPE_PARSE);
+    }
+    return output;
+}
+exports.removeTrailingNewLine = removeTrailingNewLine;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicmVtb3ZlVHJhaWxpbmdOZXdMaW5lLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vc3JjL2hlbHBlcnMvcmVtb3ZlVHJhaWxpbmdOZXdMaW5lLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7O0FBQUEsa0RBQW1GO0FBRW5GOzs7Ozs7R0FNRztBQUNILFNBQWdCLHFCQUFxQixDQUFDLEdBQVc7SUFDN0MsSUFBSSxDQUFDLENBQUMsR0FBRyxZQUFZLE1BQU0sQ0FBQyxFQUFFO1FBQzFCLE1BQU0sSUFBSSwyQkFBWSxDQUNsQix5QkFBeUIsRUFDekIsK0JBQWdCLENBQ25CLENBQUM7S0FDTDtJQUVELE1BQU0sUUFBUSxHQUFHLEdBQUcsQ0FBQyxLQUFLLENBQUMsR0FBRyxDQUFDLE1BQU0sR0FBRyxDQUFDLENBQUMsQ0FBQyxRQUFRLEVBQUUsQ0FBQztJQUN0RCxJQUFJLE1BQU0sR0FBRyxHQUFHLENBQUM7SUFDakIsSUFBSSxRQUFRLEtBQUssSUFBSSxFQUFFO1FBQ25CLCtCQUErQjtRQUMvQixNQUFNLEdBQUcsR0FBRyxDQUFDLEtBQUssQ0FBQyxDQUFDLEVBQUUsR0FBRyxDQUFDLE1BQU0sR0FBRyxDQUFDLENBQUMsQ0FBQztLQUN6QztJQUVELE1BQU0sUUFBUSxHQUFHLE1BQU0sQ0FBQyxLQUFLLENBQUMsTUFBTSxDQUFDLE1BQU0sR0FBRyxDQUFDLENBQUMsQ0FBQyxRQUFRLEVBQUUsQ0FBQztJQUM1RCxJQUFJLFFBQVEsS0FBSyxTQUFTLEVBQUU7UUFDeEIsTUFBTSxJQUFJLDJCQUFZLENBQ2xCLHVDQUF1QyxFQUN2QywrQkFBZ0IsQ0FDbkIsQ0FBQztLQUNMO0lBRUQsT0FBTyxNQUFNLENBQUM7QUFDbEIsQ0FBQztBQXhCRCxzREF3QkMiLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBFUlJPUl9UWVBFX0lOUFVULCBFUlJPUl9UWVBFX1BBUlNFLCBTaWduUGRmRXJyb3IgfSBmcm9tICcuLi9TaWduUGRmRXJyb3InO1xuXG4vKipcbiAqIFJlbW92ZXMgYSB0cmFpbGluZyBuZXcgbGluZSBpZiB0aGVyZSBpcyBzdWNoLlxuICpcbiAqIEFsc28gbWFrZXMgc3VyZSB0aGUgZmlsZSBlbmRzIHdpdGggYW4gRU9GIGxpbmUgYXMgcGVyIHNwZWMuXG4gKiBAcGFyYW0ge0J1ZmZlcn0gcGRmXG4gKiBAcmV0dXJucyB7QnVmZmVyfVxuICovXG5leHBvcnQgZnVuY3Rpb24gcmVtb3ZlVHJhaWxpbmdOZXdMaW5lKHBkZjogQnVmZmVyKTogQnVmZmVyIHtcbiAgICBpZiAoIShwZGYgaW5zdGFuY2VvZiBCdWZmZXIpKSB7XG4gICAgICAgIHRocm93IG5ldyBTaWduUGRmRXJyb3IoXG4gICAgICAgICAgICAnUERGIGV4cGVjdGVkIGFzIEJ1ZmZlci4nLFxuICAgICAgICAgICAgRVJST1JfVFlQRV9JTlBVVCxcbiAgICAgICAgKTtcbiAgICB9XG5cbiAgICBjb25zdCBsYXN0Q2hhciA9IHBkZi5zbGljZShwZGYubGVuZ3RoIC0gMSkudG9TdHJpbmcoKTtcbiAgICBsZXQgb3V0cHV0ID0gcGRmO1xuICAgIGlmIChsYXN0Q2hhciA9PT0gJ1xcbicpIHtcbiAgICAgICAgLy8gcmVtb3ZlIHRoZSB0cmFpbGluZyBuZXcgbGluZVxuICAgICAgICBvdXRwdXQgPSBwZGYuc2xpY2UoMCwgcGRmLmxlbmd0aCAtIDEpO1xuICAgIH1cblxuICAgIGNvbnN0IGxhc3RMaW5lID0gb3V0cHV0LnNsaWNlKG91dHB1dC5sZW5ndGggLSA2KS50b1N0cmluZygpO1xuICAgIGlmIChsYXN0TGluZSAhPT0gJ1xcbiUlRU9GJykge1xuICAgICAgICB0aHJvdyBuZXcgU2lnblBkZkVycm9yKFxuICAgICAgICAgICAgJ0EgUERGIGZpbGUgbXVzdCBlbmQgd2l0aCBhbiBFT0YgbGluZS4nLFxuICAgICAgICAgICAgRVJST1JfVFlQRV9QQVJTRSxcbiAgICAgICAgKTtcbiAgICB9XG5cbiAgICByZXR1cm4gb3V0cHV0O1xufVxuIl19

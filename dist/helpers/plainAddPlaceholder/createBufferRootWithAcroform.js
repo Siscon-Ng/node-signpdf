@@ -1,18 +1,15 @@
 "use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _getIndexFromRef = _interopRequireDefault(require("./getIndexFromRef"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-const createBufferRootWithAcroform = (pdf, info, form) => {
-  const rootIndex = (0, _getIndexFromRef.default)(info.xref, info.rootRef);
-  return Buffer.concat([Buffer.from(`${rootIndex} 0 obj\n`), Buffer.from('<<\n'), Buffer.from(`${info.root}\n`), Buffer.from(`/AcroForm ${form}`), Buffer.from('\n>>\nendobj\n')]);
-};
-
-var _default = createBufferRootWithAcroform;
-exports.default = _default;
+Object.defineProperty(exports, "__esModule", { value: true });
+const getIndexFromRef_1 = require("./getIndexFromRef");
+function createBufferRootWithAcroform(pdf, info, form) {
+    const rootIndex = getIndexFromRef_1.getIndexFromRef(info.xref, info.rootRef);
+    return Buffer.concat([
+        Buffer.from(`${rootIndex} 0 obj\n`),
+        Buffer.from('<<\n'),
+        Buffer.from(`${info.root}\n`),
+        Buffer.from(`/AcroForm ${form}`),
+        Buffer.from('\n>>\nendobj\n'),
+    ]);
+}
+exports.createBufferRootWithAcroform = createBufferRootWithAcroform;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiY3JlYXRlQnVmZmVyUm9vdFdpdGhBY3JvZm9ybS5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9oZWxwZXJzL3BsYWluQWRkUGxhY2Vob2xkZXIvY3JlYXRlQnVmZmVyUm9vdFdpdGhBY3JvZm9ybS50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOztBQUFBLHVEQUFvRDtBQUdwRCxTQUFnQiw0QkFBNEIsQ0FBQyxHQUFXLEVBQUUsSUFBYSxFQUFFLElBQVM7SUFDOUUsTUFBTSxTQUFTLEdBQUcsaUNBQWUsQ0FBQyxJQUFJLENBQUMsSUFBSSxFQUFFLElBQUksQ0FBQyxPQUFPLENBQUMsQ0FBQztJQUUzRCxPQUFPLE1BQU0sQ0FBQyxNQUFNLENBQUM7UUFDakIsTUFBTSxDQUFDLElBQUksQ0FBQyxHQUFHLFNBQVMsVUFBVSxDQUFDO1FBQ25DLE1BQU0sQ0FBQyxJQUFJLENBQUMsTUFBTSxDQUFDO1FBQ25CLE1BQU0sQ0FBQyxJQUFJLENBQUMsR0FBRyxJQUFJLENBQUMsSUFBSSxJQUFJLENBQUM7UUFDN0IsTUFBTSxDQUFDLElBQUksQ0FBQyxhQUFhLElBQUksRUFBRSxDQUFDO1FBQ2hDLE1BQU0sQ0FBQyxJQUFJLENBQUMsZ0JBQWdCLENBQUM7S0FDaEMsQ0FBQyxDQUFDO0FBQ1AsQ0FBQztBQVZELG9FQVVDIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgZ2V0SW5kZXhGcm9tUmVmIH0gZnJvbSAnLi9nZXRJbmRleEZyb21SZWYnO1xuaW1wb3J0IHsgUGRmSW5mbyB9IGZyb20gJy4vcmVhZFBkZic7XG5cbmV4cG9ydCBmdW5jdGlvbiBjcmVhdGVCdWZmZXJSb290V2l0aEFjcm9mb3JtKHBkZjogQnVmZmVyLCBpbmZvOiBQZGZJbmZvLCBmb3JtOiBhbnkpOiBCdWZmZXIge1xuICAgIGNvbnN0IHJvb3RJbmRleCA9IGdldEluZGV4RnJvbVJlZihpbmZvLnhyZWYsIGluZm8ucm9vdFJlZik7XG5cbiAgICByZXR1cm4gQnVmZmVyLmNvbmNhdChbXG4gICAgICAgIEJ1ZmZlci5mcm9tKGAke3Jvb3RJbmRleH0gMCBvYmpcXG5gKSxcbiAgICAgICAgQnVmZmVyLmZyb20oJzw8XFxuJyksXG4gICAgICAgIEJ1ZmZlci5mcm9tKGAke2luZm8ucm9vdH1cXG5gKSxcbiAgICAgICAgQnVmZmVyLmZyb20oYC9BY3JvRm9ybSAke2Zvcm19YCksXG4gICAgICAgIEJ1ZmZlci5mcm9tKCdcXG4+PlxcbmVuZG9ialxcbicpLFxuICAgIF0pO1xufVxuIl19

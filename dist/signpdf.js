@@ -1,164 +1,141 @@
 "use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-Object.defineProperty(exports, "SignPdfError", {
-  enumerable: true,
-  get: function () {
-    return _SignPdfError.default;
-  }
-});
-exports.default = exports.SignPdf = exports.DEFAULT_BYTE_RANGE_PLACEHOLDER = void 0;
-
-var _nodeForge = _interopRequireDefault(require("node-forge"));
-
-var _SignPdfError = _interopRequireDefault(require("./SignPdfError"));
-
-var _helpers = require("./helpers");
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-const DEFAULT_BYTE_RANGE_PLACEHOLDER = '**********';
-exports.DEFAULT_BYTE_RANGE_PLACEHOLDER = DEFAULT_BYTE_RANGE_PLACEHOLDER;
-
+Object.defineProperty(exports, "__esModule", { value: true });
+const node_forge_1 = require("node-forge");
+const SignPdfError_1 = require("./SignPdfError");
+const helpers_1 = require("./helpers");
+exports.DEFAULT_BYTE_RANGE_PLACEHOLDER = '**********';
 class SignPdf {
-  constructor() {
-    this.byteRangePlaceholder = DEFAULT_BYTE_RANGE_PLACEHOLDER;
-    this.lastSignature = null;
-  }
-
-  sign(pdfBuffer, p12Buffer, additionalOptions = {}) {
-    const options = {
-      asn1StrictParsing: false,
-      passphrase: '',
-      ...additionalOptions
-    };
-
-    if (!(pdfBuffer instanceof Buffer)) {
-      throw new _SignPdfError.default('PDF expected as Buffer.', _SignPdfError.default.TYPE_INPUT);
+    constructor() {
+        this.lastSignature = null;
+        this.byteRangePlaceholder = exports.DEFAULT_BYTE_RANGE_PLACEHOLDER;
     }
-
-    if (!(p12Buffer instanceof Buffer)) {
-      throw new _SignPdfError.default('p12 certificate expected as Buffer.', _SignPdfError.default.TYPE_INPUT);
+    sign(pdfBuffer, p12Buffer, additionalOptions = {}) {
+        const options = {
+            asn1StrictParsing: false,
+            passphrase: '',
+            ...additionalOptions,
+        };
+        if (!(pdfBuffer instanceof Buffer)) {
+            throw new SignPdfError_1.SignPdfError('PDF expected as Buffer.', SignPdfError_1.ERROR_TYPE_INPUT);
+        }
+        if (!(p12Buffer instanceof Buffer)) {
+            throw new SignPdfError_1.SignPdfError('p12 certificate expected as Buffer.', SignPdfError_1.ERROR_TYPE_INPUT);
+        }
+        let pdf = helpers_1.removeTrailingNewLine(pdfBuffer);
+        // Find the ByteRange placeholder.
+        const byteRangePlaceholder = [
+            0,
+            `/${this.byteRangePlaceholder}`,
+            `/${this.byteRangePlaceholder}`,
+            `/${this.byteRangePlaceholder}`,
+        ];
+        const byteRangeString = `/ByteRange [${byteRangePlaceholder.join(' ')}]`;
+        const byteRangePos = pdf.indexOf(byteRangeString);
+        if (byteRangePos === -1) {
+            throw new SignPdfError_1.SignPdfError(`Could not find ByteRange placeholder: ${byteRangeString}`, SignPdfError_1.ERROR_TYPE_PARSE);
+        }
+        // Calculate the actual ByteRange that needs to replace the placeholder.
+        const byteRangeEnd = byteRangePos + byteRangeString.length;
+        const contentsTagPos = pdf.indexOf('/Contents ', byteRangeEnd);
+        const placeholderPos = pdf.indexOf('<', contentsTagPos);
+        const placeholderEnd = pdf.indexOf('>', placeholderPos);
+        const placeholderLengthWithBrackets = (placeholderEnd + 1) - placeholderPos;
+        const placeholderLength = placeholderLengthWithBrackets - 2;
+        const byteRange = [0, 0, 0, 0];
+        byteRange[1] = placeholderPos;
+        byteRange[2] = byteRange[1] + placeholderLengthWithBrackets;
+        byteRange[3] = pdf.length - byteRange[2];
+        let actualByteRange = `/ByteRange [${byteRange.join(' ')}]`;
+        actualByteRange += ' '.repeat(byteRangeString.length - actualByteRange.length);
+        // Replace the /ByteRange placeholder with the actual ByteRange
+        pdf = Buffer.concat([
+            pdf.slice(0, byteRangePos),
+            Buffer.from(actualByteRange),
+            pdf.slice(byteRangeEnd),
+        ]);
+        // Remove the placeholder signature
+        pdf = Buffer.concat([
+            pdf.slice(0, byteRange[1]),
+            pdf.slice(byteRange[2], byteRange[2] + byteRange[3]),
+        ]);
+        // Convert Buffer P12 to a forge implementation.
+        const forgeCert = node_forge_1.util.createBuffer(p12Buffer.toString('binary'));
+        const p12Asn1 = node_forge_1.asn1.fromDer(forgeCert);
+        const p12 = node_forge_1.pkcs12.pkcs12FromAsn1(p12Asn1, options.asn1StrictParsing, options.passphrase);
+        // Extract safe bags by type.
+        // We will need all the certificates and the private key.
+        const certBags = p12.getBags({
+            bagType: node_forge_1.pki.oids.certBag,
+        })[node_forge_1.pki.oids.certBag];
+        const keyBags = p12.getBags({
+            bagType: node_forge_1.pki.oids.pkcs8ShroudedKeyBag,
+        })[node_forge_1.pki.oids.pkcs8ShroudedKeyBag];
+        const privateKey = keyBags[0].key;
+        // Here comes the actual PKCS#7 signing.
+        const p7 = node_forge_1.pkcs7.createSignedData();
+        // Start off by setting the content.
+        p7.content = node_forge_1.util.createBuffer(pdf.toString('binary'));
+        // Then add all the certificates (-cacerts & -clcerts)
+        // Keep track of the last found client certificate.
+        // This will be the public key that will be bundled in the signature.
+        let certificate;
+        certBags.forEach(bag => {
+            const publicKey = bag.cert.publicKey;
+            p7.addCertificate(bag.cert);
+            // Try to find the certificate that matches the private key.
+            if (privateKey.n.compareTo(publicKey.n) === 0
+                && privateKey.e.compareTo(publicKey.e) === 0) {
+                certificate = bag.cert;
+            }
+        });
+        if (typeof certificate === 'undefined') {
+            throw new SignPdfError_1.SignPdfError('Failed to find a certificate that matches the private key.', SignPdfError_1.ERROR_TYPE_INPUT);
+        }
+        // Add a sha256 signer. That's what Adobe.PPKLite adbe.pkcs7.detached expects.
+        p7.addSigner({
+            key: privateKey,
+            certificate,
+            digestAlgorithm: node_forge_1.pki.oids.sha256,
+            authenticatedAttributes: [
+                {
+                    type: node_forge_1.pki.oids.contentType,
+                    value: node_forge_1.pki.oids.data,
+                }, {
+                    type: node_forge_1.pki.oids.messageDigest,
+                }, {
+                    type: node_forge_1.pki.oids.signingTime,
+                    // value can also be auto-populated at signing time
+                    // We may also support passing this as an option to sign().
+                    // Would be useful to match the creation time of the document for example.
+                    value: new Date().toDateString(),
+                },
+            ],
+        });
+        // Sign in detached mode.
+        p7.sign({ detached: true });
+        // Check if the PDF has a good enough placeholder to fit the signature.
+        const raw = node_forge_1.asn1.toDer(p7.toAsn1()).getBytes();
+        // placeholderLength represents the length of the HEXified symbols but we're
+        // checking the actual lengths.
+        if ((raw.length * 2) > placeholderLength) {
+            throw new SignPdfError_1.SignPdfError(`Signature exceeds placeholder length: ${raw.length * 2} > ${placeholderLength}`, SignPdfError_1.ERROR_TYPE_INPUT);
+        }
+        let signature = Buffer.from(raw, 'binary').toString('hex');
+        // Store the HEXified signature. At least useful in tests.
+        this.lastSignature = signature;
+        // Pad the signature with zeroes so the it is the same length as the placeholder
+        signature += Buffer
+            .from(String.fromCharCode(0).repeat((placeholderLength / 2) - raw.length))
+            .toString('hex');
+        // Place it in the document.
+        pdf = Buffer.concat([
+            pdf.slice(0, byteRange[1]),
+            Buffer.from(`<${signature}>`),
+            pdf.slice(byteRange[1]),
+        ]);
+        // Magic. Done.
+        return pdf;
     }
-
-    let pdf = (0, _helpers.removeTrailingNewLine)(pdfBuffer); // Find the ByteRange placeholder.
-
-    const byteRangePlaceholder = [0, `/${this.byteRangePlaceholder}`, `/${this.byteRangePlaceholder}`, `/${this.byteRangePlaceholder}`];
-    const byteRangeString = `/ByteRange [${byteRangePlaceholder.join(' ')}]`;
-    const byteRangePos = pdf.indexOf(byteRangeString);
-
-    if (byteRangePos === -1) {
-      throw new _SignPdfError.default(`Could not find ByteRange placeholder: ${byteRangeString}`, _SignPdfError.default.TYPE_PARSE);
-    } // Calculate the actual ByteRange that needs to replace the placeholder.
-
-
-    const byteRangeEnd = byteRangePos + byteRangeString.length;
-    const contentsTagPos = pdf.indexOf('/Contents ', byteRangeEnd);
-    const placeholderPos = pdf.indexOf('<', contentsTagPos);
-    const placeholderEnd = pdf.indexOf('>', placeholderPos);
-    const placeholderLengthWithBrackets = placeholderEnd + 1 - placeholderPos;
-    const placeholderLength = placeholderLengthWithBrackets - 2;
-    const byteRange = [0, 0, 0, 0];
-    byteRange[1] = placeholderPos;
-    byteRange[2] = byteRange[1] + placeholderLengthWithBrackets;
-    byteRange[3] = pdf.length - byteRange[2];
-    let actualByteRange = `/ByteRange [${byteRange.join(' ')}]`;
-    actualByteRange += ' '.repeat(byteRangeString.length - actualByteRange.length); // Replace the /ByteRange placeholder with the actual ByteRange
-
-    pdf = Buffer.concat([pdf.slice(0, byteRangePos), Buffer.from(actualByteRange), pdf.slice(byteRangeEnd)]); // Remove the placeholder signature
-
-    pdf = Buffer.concat([pdf.slice(0, byteRange[1]), pdf.slice(byteRange[2], byteRange[2] + byteRange[3])]); // Convert Buffer P12 to a forge implementation.
-
-    const forgeCert = _nodeForge.default.util.createBuffer(p12Buffer.toString('binary'));
-
-    const p12Asn1 = _nodeForge.default.asn1.fromDer(forgeCert);
-
-    const p12 = _nodeForge.default.pkcs12.pkcs12FromAsn1(p12Asn1, options.asn1StrictParsing, options.passphrase); // Extract safe bags by type.
-    // We will need all the certificates and the private key.
-
-
-    const certBags = p12.getBags({
-      bagType: _nodeForge.default.pki.oids.certBag
-    })[_nodeForge.default.pki.oids.certBag];
-
-    const keyBags = p12.getBags({
-      bagType: _nodeForge.default.pki.oids.pkcs8ShroudedKeyBag
-    })[_nodeForge.default.pki.oids.pkcs8ShroudedKeyBag];
-
-    const privateKey = keyBags[0].key; // Here comes the actual PKCS#7 signing.
-
-    const p7 = _nodeForge.default.pkcs7.createSignedData(); // Start off by setting the content.
-
-
-    p7.content = _nodeForge.default.util.createBuffer(pdf.toString('binary')); // Then add all the certificates (-cacerts & -clcerts)
-    // Keep track of the last found client certificate.
-    // This will be the public key that will be bundled in the signature.
-
-    let certificate;
-    Object.keys(certBags).forEach(i => {
-      const {
-        publicKey
-      } = certBags[i].cert;
-      p7.addCertificate(certBags[i].cert); // Try to find the certificate that matches the private key.
-
-      if (privateKey.n.compareTo(publicKey.n) === 0 && privateKey.e.compareTo(publicKey.e) === 0) {
-        certificate = certBags[i].cert;
-      }
-    });
-
-    if (typeof certificate === 'undefined') {
-      throw new _SignPdfError.default('Failed to find a certificate that matches the private key.', _SignPdfError.default.TYPE_INPUT);
-    } // Add a sha256 signer. That's what Adobe.PPKLite adbe.pkcs7.detached expects.
-
-
-    p7.addSigner({
-      key: privateKey,
-      certificate,
-      digestAlgorithm: _nodeForge.default.pki.oids.sha256,
-      authenticatedAttributes: [{
-        type: _nodeForge.default.pki.oids.contentType,
-        value: _nodeForge.default.pki.oids.data
-      }, {
-        type: _nodeForge.default.pki.oids.messageDigest // value will be auto-populated at signing time
-
-      }, {
-        type: _nodeForge.default.pki.oids.signingTime,
-        // value can also be auto-populated at signing time
-        // We may also support passing this as an option to sign().
-        // Would be useful to match the creation time of the document for example.
-        value: new Date()
-      }]
-    }); // Sign in detached mode.
-
-    p7.sign({
-      detached: true
-    }); // Check if the PDF has a good enough placeholder to fit the signature.
-
-    const raw = _nodeForge.default.asn1.toDer(p7.toAsn1()).getBytes(); // placeholderLength represents the length of the HEXified symbols but we're
-    // checking the actual lengths.
-
-
-    if (raw.length * 2 > placeholderLength) {
-      throw new _SignPdfError.default(`Signature exceeds placeholder length: ${raw.length * 2} > ${placeholderLength}`, _SignPdfError.default.TYPE_INPUT);
-    }
-
-    let signature = Buffer.from(raw, 'binary').toString('hex'); // Store the HEXified signature. At least useful in tests.
-
-    this.lastSignature = signature; // Pad the signature with zeroes so the it is the same length as the placeholder
-
-    signature += Buffer.from(String.fromCharCode(0).repeat(placeholderLength / 2 - raw.length)).toString('hex'); // Place it in the document.
-
-    pdf = Buffer.concat([pdf.slice(0, byteRange[1]), Buffer.from(`<${signature}>`), pdf.slice(byteRange[1])]); // Magic. Done.
-
-    return pdf;
-  }
-
 }
-
 exports.SignPdf = SignPdf;
-
-var _default = new SignPdf();
-
-exports.default = _default;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoic2lnbnBkZi5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uL3NyYy9zaWducGRmLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7O0FBQUEsMkNBQTREO0FBQzVELGlEQUFrRjtBQUNsRix1Q0FBa0Q7QUFFckMsUUFBQSw4QkFBOEIsR0FBRyxZQUFZLENBQUM7QUFFM0QsTUFBYSxPQUFPO0lBQXBCO1FBRVcsa0JBQWEsR0FBa0IsSUFBSSxDQUFDO1FBQ25DLHlCQUFvQixHQUFHLHNDQUE4QixDQUFDO0lBK0tsRSxDQUFDO0lBN0tVLElBQUksQ0FDUCxTQUFpQixFQUNqQixTQUFpQixFQUNqQixpQkFBaUIsR0FBRyxFQUFFO1FBRXRCLE1BQU0sT0FBTyxHQUFHO1lBQ1osaUJBQWlCLEVBQUUsS0FBSztZQUN4QixVQUFVLEVBQUUsRUFBRTtZQUNkLEdBQUcsaUJBQWlCO1NBQ3ZCLENBQUM7UUFFRixJQUFJLENBQUMsQ0FBQyxTQUFTLFlBQVksTUFBTSxDQUFDLEVBQUU7WUFDaEMsTUFBTSxJQUFJLDJCQUFZLENBQ2xCLHlCQUF5QixFQUN6QiwrQkFBZ0IsQ0FDbkIsQ0FBQztTQUNMO1FBQ0QsSUFBSSxDQUFDLENBQUMsU0FBUyxZQUFZLE1BQU0sQ0FBQyxFQUFFO1lBQ2hDLE1BQU0sSUFBSSwyQkFBWSxDQUNsQixxQ0FBcUMsRUFDckMsK0JBQWdCLENBQ25CLENBQUM7U0FDTDtRQUVELElBQUksR0FBRyxHQUFHLCtCQUFxQixDQUFDLFNBQVMsQ0FBQyxDQUFDO1FBRTNDLGtDQUFrQztRQUNsQyxNQUFNLG9CQUFvQixHQUFHO1lBQ3pCLENBQUM7WUFDRCxJQUFJLElBQUksQ0FBQyxvQkFBb0IsRUFBRTtZQUMvQixJQUFJLElBQUksQ0FBQyxvQkFBb0IsRUFBRTtZQUMvQixJQUFJLElBQUksQ0FBQyxvQkFBb0IsRUFBRTtTQUNsQyxDQUFDO1FBQ0YsTUFBTSxlQUFlLEdBQUcsZUFBZSxvQkFBb0IsQ0FBQyxJQUFJLENBQUMsR0FBRyxDQUFDLEdBQUcs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RS9CLGdGQUFnRjtRQUNoRixTQUFTLElBQUksTUFBTTthQUNkLElBQUksQ0FBQyxNQUFNLENBQUMsWUFBWSxDQUFDLENBQUMsQ0FBQyxDQUFDLE1BQU0sQ0FBQyxDQUFDLGlCQUFpQixHQUFHLENBQUMsQ0FBQyxHQUFHLEdBQUcsQ0FBQyxNQUFNLENBQUMsQ0FBQzthQUN6RSxRQUFRLENBQUMsS0FBSyxDQUFDLENBQUM7UUFFckIsNEJBQTRCO1FBQzVCLEdBQUcsR0FBRyxNQUFNLENBQUMsTUFBTSxDQUFDO1lBQ2hCLEdBQUcsQ0FBQyxLQUFLLENBQUMsQ0FBQyxFQUFFLFNBQVMsQ0FBQyxDQUFDLENBQUMsQ0FBQztZQUMxQixNQUFNLENBQUMsSUFBSSxDQUFDLElBQUksU0FBUyxHQUFHLENBQUM7WUFDN0IsR0FBRyxDQUFDLEtBQUssQ0FBQyxTQUFTLENBQUMsQ0FBQyxDQUFDLENBQUM7U0FDMUIsQ0FBQyxDQUFDO1FBRUgsZUFBZTtRQUNmLE9BQU8sR0FBRyxDQUFDO0lBQ2YsQ0FBQztDQUNKO0FBbExELDBCQWtMQyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IGFzbjEsIHBrY3MxMiwgcGtjczcsIHBraSwgdXRpbCB9IGZyb20gJ25vZGUtZm9yZ2UnO1xuaW1wb3J0IHsgRVJST1JfVFlQRV9JTlBVVCwgRVJST1JfVFlQRV9QQVJTRSwgU2lnblBkZkVycm9yIH0gZnJvbSAnLi9TaWduUGRmRXJyb3InO1xuaW1wb3J0IHsgcmVtb3ZlVHJhaWxpbmdOZXdMaW5lIH0gZnJvbSAnLi9oZWxwZXJzJztcblxuZXhwb3J0IGNvbnN0IERFRkFVTFRfQllURV9SQU5HRV9QTEFDRUhPTERFUiA9ICcqKioqKioqKioqJztcblxuZXhwb3J0IGNsYXNzIFNpZ25QZGYge1xuXG4gICAgcHVibGljIGxhc3RTaWduYXR1cmU6IHN0cmluZyB8IG51bGwgPSBudWxsO1xuICAgIHByaXZhdGUgYnl0ZVJhbmdlUGxhY2Vob2xkZXIgPSBERUZBVUxUX0JZVEVfUkFOR0VfUExBQ0VIT0xERVI7XG5cbiAgICBwdWJsaWMgc2lnbihcbiAgICAgICAgcGRmQnVmZmVyOiBCdWZmZXIsXG4gICAgICAgIHAxMkJ1ZmZlcjogQnVmZmVyLFxuICAgICAgICBhZGRpdGlvbmFsT3B0aW9ucyA9IHt9LFxuICAgICkge1xuICAgICAgICBjb25zdCBvcHRpb25zID0ge1xuICAgICAgICAgICAgYXNuMVN0cmljdFBhcnNpbmc6IGZhbHNlLFxuICAgICAgICAgICAgcGFzc3BocmFzZTogJycsXG4gICAgICAgICAgICAuLi5hZGRpdGlvbmFsT3B0aW9ucyxcbiAgICAgICAgfTtcblxuICAgICAgICBpZiAoIShwZGZCdWZmZXIgaW5zdGFuY2VvZiBCdWZmZXIpKSB7XG4gICAgICAgICAgICB0aHJvdyBuZXcgU2lnblBkZkVycm9yKFxuICAgICAgICAgICAgICAgICdQREYgZXhwZWN0ZWQgYXMgQnVmZmVyLicsXG4gICAgICAgICAgICAgICAgRVJST1JfVFlQRV9JTlBVVCxcbiAgICAgICAgICAgICk7XG4gICAgICAgIH1cbiAgICAgICAgaWYgKCEocDEyQnVmZmVyIGluc3RhbmNlb2YgQnVmZmVyKSkge1xuICAgICAgICAgICAgdGhyb3cgbmV3IFNpZ25QZGZFcnJvcihcbiAgICAgICAgICAgICAgICAncDEyIGNlcnRpZmljYXRlIGV4cGVjdGVkIGFzIEJ1ZmZlci4nLFxuICAgICAgICAgICAgICAgIEVSUk9SX1RZUEVfSU5QVVQsXG4gICAgICAgICAgICApO1xuICAgICAgICB9XG5cbiAgICAgICAgbGV0IHBkZiA9IHJlbW92ZVRyYWlsaW5nTmV3TGluZShwZGZCdWZmZXIpO1xuXG4gICAgICAgIC8vIEZpbmQgdGhlIEJ5dGVSYW5nZSBwbGFjZWhvbGRlci5cbiAgICAgICAgY29uc3QgYnl0ZVJhbmdlUGxhY2Vob2xkZXIgPSBbXG4gICAgICAgICAgICAwLFxuICAgICAgICAgICAgYC8ke3RoaXMuYnl0ZVJhbmdlUGxhY2Vob2xkZXJ9YCxcbiAgICAgICAgICAgIGAvJHt0aGlzLmJ5dGVSYW5nZVBsYWNlaG9sZGVyfWAsXG4gICAgICAgICAgICBgLyR7dGhpcy5ieXRlUmFuZ2VQbGFjZWhvbGRlcn1gLFxuICAgICAgICBdO1xuICAgICAgICBjb25zdCBieXRlUmFuZ2VTdHJpbmcgPSBgL0J5dGVSYW5nZSBbJHtieXRlUmFuZ2VQbGFjZWhvbGRlci5qb2luKCcgJyl9XWA7XG4gICAgICAgIGNvbnN0IGJ5dGVSYW5nZVBvcyA9IHBkZi5pbmRleE9mKGJ5dGVSYW5nZVN0cmluZyk7XG4gICAgICAgIGlmIChieXRlUmFuZ2VQb3MgPT09IC0xKSB7XG4gICAgICAgICAgICB0aHJvdyBuZXcgU2lnblBkZkVycm9yKFxuICAgICAgICAgICAgICAgIGBDb3VsZCBub3QgZmluZCBCeXRlUmFuZ2UgcGxhY2Vob2xkZXI6ICR7Ynl0ZVJhbmdlU3RyaW5nfWAsXG4gICAgICAgICAgICAgICAgRVJST1JfVFlQRV9QQVJTRSxcbiAgICAgICAgICAgICk7XG4gICAgICAgIH1cblxuICAgICAgICAvLyBDYWxjdWxhdGUgdGhlIGFjdHVhbCBCeXRlUmFuZ2UgdGhhdCBuZWVkcyB0byByZXBsYWNlIHRoZSBwbGFjZWhvbGRlci5cbiAgICAgICAgY29uc3QgYnl0ZVJhbmdlRW5kID0gYnl0ZVJhbmdlUG9zICsgYnl0ZVJhbmdlU3RyaW5nLmxlbmd0aDtcbiAgICAgICAgY29uc3QgY29udGVudHNUYWdQb3MgPSBwZGYuaW5kZXhPZignL0NvbnRlbnRzICcsIGJ5dGVSYW5nZUVuZCk7XG4gICAgICAgIGNvbnN0IHBsYWNlaG9sZGVyUG9zID0gcGRmLmluZGV4T2YoJzwnLCBjb250ZW50c1RhZ1Bvcyk7XG4gICAgICAgIGNvbnN0IHBsYWNlaG9sZGVyRW5kID0gcGRmLmluZGV4T2YoJz4nLCBwbGFjZWhvbGRlclBvcyk7XG4gICAgICAgIGNvbnN0IHBsYWNlaG9sZGVyTGVuZ3RoV2l0aEJyYWNrZXRzID0gKHBsYWNlaG9sZGVyRW5kICsgMSkgLSBwbGFjZWhvbGRlclBvcztcbiAgICAgICAgY29uc3QgcGxhY2Vob2xkZXJMZW5ndGggPSBwbGFjZWhvbGRlckxlbmd0aFdpdGhCcmFja2V0cyAtIDI7XG4gICAgICAgIGNvbnN0IGJ5dGVSYW5nZSA9IFswLCAwLCAwLCAwXTtcbiAgICAgICAgYnl0ZVJhbmdlWzFdID0gcGxhY2Vob2xkZXJQb3M7XG4gICAgICAgIGJ5dGVSYW5nZVsyXSA9IGJ5dGVSYW5nZVsxXSArIHBsYWNlaG9sZGVyTGVuZ3RoV2l0aEJyYWNrZXRzO1xuICAgICAgICBieXRlUmFuZ2VbM10gPSBwZGYubGVuZ3RoIC0gYnl0ZVJhbmdlWzJdO1xuICAgICAgICBsZXQgYWN0dWFsQnl0ZVJhbmdlID0gYC9CeXRlUmFuZ2UgWyR7Ynl0ZVJhbmdlLmpvaW4oJyAnKX1dYDtcbiAgICAgICAgYWN0dWFsQnl0ZVJhbmdlICs9ICcgJy5yZXBlYXQoYnl0ZVJhbmdlU3RyaW5nLmxlbmd0aCAtIGFjdHVhbEJ5dGVSYW5nZS5sZW5ndGgpO1xuXG4gICAgICAgIC8vIFJlcGxhY2UgdGhlIC9CeXRlUmFuZ2UgcGxhY2Vob2xkZXIgd2l0aCB0aGUgYWN0dWFsIEJ5dGVSYW5nZVxuICAgICAgICBwZGYgPSBCdWZmZXIuY29uY2F0KFtcbiAgICAgICAgICAgIHBkZi5zbGljZSgwLCBieXRlUmFuZ2VQb3MpLFxuICAgICAgICAgICAgQnVmZmVyLmZyb20oYWN0dWFsQnl0ZVJhbmdlKSxcbiAgICAgICAgICAgIHBkZi5zbGljZShieXRlUmFuZ2VFbmQpLFxuICAgICAgICBdKTtcblxuICAgICAgICAvLyBSZW1vdmUgdGhlIHBsYWNlaG9sZGVyIHNpZ25hdHVyZVxuICAgICAgICBwZGYgPSBCdWZmZXIuY29uY2F0KFtcbiAgICAgICAgICAgIHBkZi5zbGljZSgwLCBieXRlUmFuZ2VbMV0pLFxuICAgICAgICAgICAgcGRmLnNsaWNlKGJ5dGVSYW5nZVsyXSwgYnl0ZVJhbmdlWzJdICsgYnl0ZVJhbmdlWzNdKSxcbiAgICAgICAgXSk7XG5cbiAgICAgICAgLy8gQ29udmVydCBCdWZmZXIgUDEyIHRvIGEgZm9yZ2UgaW1wbGVtZW50YXRpb24uXG4gICAgICAgIGNvbnN0IGZvcmdlQ2VydCA9IHV0aWwuY3JlYXRlQnVmZmVyKHAxMkJ1ZmZlci50b1N0cmluZygnYmluYXJ5JykpO1xuICAgICAgICBjb25zdCBwMTJBc24xID0gYXNuMS5mcm9tRGVyKGZvcmdlQ2VydCk7XG4gICAgICAgIGNvbnN0IHAxMiA9IHBrY3MxMi5wa2NzMTJGcm9tQXNuMShcbiAgICAgICAgICAgIHAxMkFzbjEsXG4gICAgICAgICAgICBvcHRpb25zLmFzbjFTdHJpY3RQYXJzaW5nLFxuICAgICAgICAgICAgb3B0aW9ucy5wYXNzcGhyYXNlLFxuICAgICAgICApO1xuXG4gICAgICAgIC8vIEV4dHJhY3Qgc2FmZSBiYWdzIGJ5IHR5cGUuXG4gICAgICAgIC8vIFdlIHdpbGwgbmVlZCBhbGwgdGhlIGNlcnRpZmljYXRlcyBhbmQgdGhlIHByaXZhdGUga2V5LlxuICAgICAgICBjb25zdCBjZXJ0QmFncyA9IHAxMi5nZXRCYWdzKHtcbiAgICAgICAgICAgIGJhZ1R5cGU6IHBraS5vaWRzLmNlcnRCYWcsXG4gICAgICAgIH0pW3BraS5vaWRzLmNlcnRCYWddIGFzIHBrY3MxMi5CYWdbXTtcbiAgICAgICAgY29uc3Qga2V5QmFncyA9IHAxMi5nZXRCYWdzKHtcbiAgICAgICAgICAgIGJhZ1R5cGU6IHBraS5vaWRzLnBrY3M4U2hyb3VkZWRLZXlCYWcsXG4gICAgICAgIH0pW3BraS5vaWRzLnBrY3M4U2hyb3VkZWRLZXlCYWddIGFzIHBrY3MxMi5CYWdbXTtcblxuICAgICAgICBjb25zdCBwcml2YXRlS2V5ID0ga2V5QmFnc1swXS5rZXkgYXMgYW55O1xuXG4gICAgICAgIC8vIEhlcmUgY29tZXMgdGhlIGFjdHVhbCBQS0NTIzcgc2lnbmluZy5cbiAgICAgICAgY29uc3QgcDcgPSBwa2NzNy5jcmVhdGVTaWduZWREYXRhKCk7XG4gICAgICAgIC8vIFN0YXJ0IG9mZiBieSBzZXR0aW5nIHRoZSBjb250ZW50LlxuICAgICAgICBwNy5jb250ZW50ID0gdXRpbC5jcmVhdGVCdWZmZXIocGRmLnRvU3RyaW5nKCdiaW5hcnknKSk7XG5cbiAgICAgICAgLy8gVGhlbiBhZGQgYWxsIHRoZSBjZXJ0aWZpY2F0ZXMgKC1jYWNlcnRzICYgLWNsY2VydHMpXG4gICAgICAgIC8vIEtlZXAgdHJhY2sgb2YgdGhlIGxhc3QgZm91bmQgY2xpZW50IGNlcnRpZmljYXRlLlxuICAgICAgICAvLyBUaGlzIHdpbGwgYmUgdGhlIHB1YmxpYyBrZXkgdGhhdCB3aWxsIGJlIGJ1bmRsZWQgaW4gdGhlIHNpZ25hdHVyZS5cbiAgICAgICAgbGV0IGNlcnRpZmljYXRlO1xuICAgICAgICBjZXJ0QmFncy5mb3JFYWNoKGJhZyA9PiB7XG4gICAgICAgICAgICBjb25zdCBwdWJsaWNLZXkgPSAoYmFnLmNlcnQgYXMgcGtpLkNlcnRpZmljYXRlKS5wdWJsaWNLZXkgYXMgcGtpLnJzYS5QdWJsaWNLZXk7XG5cbiAgICAgICAgICAgIHA3LmFkZENlcnRpZmljYXRlKGJhZy5jZXJ0IGFzIHBraS5DZXJ0aWZpY2F0ZSk7XG5cbiAgICAgICAgICAgIC8vIFRyeSB0byBmaW5kIHRoZSBjZXJ0aWZpY2F0ZSB0aGF0IG1hdGNoZXMgdGhlIHByaXZhdGUga2V5LlxuICAgICAgICAgICAgaWYgKHByaXZhdGVLZXkubi5jb21wYXJlVG8ocHVibGljS2V5Lm4pID09PSAwXG4gICAgICAgICAgICAgICAgJiYgcHJpdmF0ZUtleS5lLmNvbXBhcmVUbyhwdWJsaWNLZXkuZSkgPT09IDBcbiAgICAgICAgICAgICkge1xuICAgICAgICAgICAgICAgIGNlcnRpZmljYXRlID0gYmFnLmNlcnQ7XG4gICAgICAgICAgICB9XG4gICAgICAgIH0pO1xuXG4gICAgICAgIGlmICh0eXBlb2YgY2VydGlmaWNhdGUgPT09ICd1bmRlZmluZWQnKSB7XG4gICAgICAgICAgICB0aHJvdyBuZXcgU2lnblBkZkVycm9yKFxuICAgICAgICAgICAgICAgICdGYWlsZWQgdG8gZmluZCBhIGNlcnRpZmljYXRlIHRoYXQgbWF0Y2hlcyB0aGUgcHJpdmF0ZSBrZXkuJyxcbiAgICAgICAgICAgICAgICBFUlJPUl9UWVBFX0lOUFVULFxuICAgICAgICAgICAgKTtcbiAgICAgICAgfVxuXG4gICAgICAgIC8vIEFkZCBhIHNoYTI1NiBzaWduZXIuIFRoYXQncyB3aGF0IEFkb2JlLlBQS0xpdGUgYWRiZS5wa2NzNy5kZXRhY2hlZCBleHBlY3RzLlxuICAgICAgICBwNy5hZGRTaWduZXIoe1xuICAgICAgICAgICAga2V5OiBwcml2YXRlS2V5LFxuICAgICAgICAgICAgY2VydGlmaWNhdGUsXG4gICAgICAgICAgICBkaWdlc3RBbGdvcml0aG06IHBraS5vaWRzLnNoYTI1NixcbiAgICAgICAgICAgIGF1dGhlbnRpY2F0ZWRBdHRyaWJ1dGVzOiBbXG4gICAgICAgICAgICAgICAge1xuICAgICAgICAgICAgICAgICAgICB0eXBlOiBwa2kub2lkcy5jb250ZW50VHlwZSxcbiAgICAgICAgICAgICAgICAgICAgdmFsdWU6IHBraS5vaWRzLmRhdGEsXG4gICAgICAgICAgICAgICAgfSwge1xuICAgICAgICAgICAgICAgICAgICB0eXBlOiBwa2kub2lkcy5tZXNzYWdlRGlnZXN0LFxuICAgICAgICAgICAgICAgICAgICAvLyB2YWx1ZSB3aWxsIGJlIGF1dG8tcG9wdWxhdGVkIGF0IHNpZ25pbmcgdGltZVxuICAgICAgICAgICAgICAgIH0sIHtcbiAgICAgICAgICAgICAgICAgICAgdHlwZTogcGtpLm9pZHMuc2lnbmluZ1RpbWUsXG4gICAgICAgICAgICAgICAgICAgIC8vIHZhbHVlIGNhbiBhbHNvIGJlIGF1dG8tcG9wdWxhdGVkIGF0IHNpZ25pbmcgdGltZVxuICAgICAgICAgICAgICAgICAgICAvLyBXZSBtYXkgYWxzbyBzdXBwb3J0IHBhc3NpbmcgdGhpcyBhcyBhbiBvcHRpb24gdG8gc2lnbigpLlxuICAgICAgICAgICAgICAgICAgICAvLyBXb3VsZCBiZSB1c2VmdWwgdG8gbWF0Y2ggdGhlIGNyZWF0aW9uIHRpbWUgb2YgdGhlIGRvY3VtZW50IGZvciBleGFtcGxlLlxuICAgICAgICAgICAgICAgICAgICB2YWx1ZTogbmV3IERhdGUoKS50b0RhdGVTdHJpbmcoKSwgLy8gbmV3IERhdGUoKVxuICAgICAgICAgICAgICAgIH0sXG4gICAgICAgICAgICBdLFxuICAgICAgICB9KTtcblxuICAgICAgICAvLyBTaWduIGluIGRldGFjaGVkIG1vZGUuXG4gICAgICAgIHA3LnNpZ24oe2RldGFjaGVkOiB0cnVlfSk7XG5cbiAgICAgICAgLy8gQ2hlY2sgaWYgdGhlIFBERiBoYXMgYSBnb29kIGVub3VnaCBwbGFjZWhvbGRlciB0byBmaXQgdGhlIHNpZ25hdHVyZS5cbiAgICAgICAgY29uc3QgcmF3ID0gYXNuMS50b0RlcihwNy50b0FzbjEoKSkuZ2V0Qnl0ZXMoKTtcbiAgICAgICAgLy8gcGxhY2Vob2xkZXJMZW5ndGggcmVwcmVzZW50cyB0aGUgbGVuZ3RoIG9mIHRoZSBIRVhpZmllZCBzeW1ib2xzIGJ1dCB3ZSdyZVxuICAgICAgICAvLyBjaGVja2luZyB0aGUgYWN0dWFsIGxlbmd0aHMuXG4gICAgICAgIGlmICgocmF3Lmxlbmd0aCAqIDIpID4gcGxhY2Vob2xkZXJMZW5ndGgpIHtcbiAgICAgICAgICAgIHRocm93IG5ldyBTaWduUGRmRXJyb3IoXG4gICAgICAgICAgICAgICAgYFNpZ25hdHVyZSBleGNlZWRzIHBsYWNlaG9sZGVyIGxlbmd0aDogJHtyYXcubGVuZ3RoICogMn0gPiAke3BsYWNlaG9sZGVyTGVuZ3RofWAsXG4gICAgICAgICAgICAgICAgRVJST1JfVFlQRV9JTlBVVCxcbiAgICAgICAgICAgICk7XG4gICAgICAgIH1cblxuICAgICAgICBsZXQgc2lnbmF0dXJlID0gQnVmZmVyLmZyb20ocmF3LCAnYmluYXJ5JykudG9TdHJpbmcoJ2hleCcpO1xuICAgICAgICAvLyBTdG9yZSB0aGUgSEVYaWZpZWQgc2lnbmF0dXJlLiBBdCBsZWFzdCB1c2VmdWwgaW4gdGVzdHMuXG4gICAgICAgIHRoaXMubGFzdFNpZ25hdHVyZSA9IHNpZ25hdHVyZTtcblxuICAgICAgICAvLyBQYWQgdGhlIHNpZ25hdHVyZSB3aXRoIHplcm9lcyBzbyB0aGUgaXQgaXMgdGhlIHNhbWUgbGVuZ3RoIGFzIHRoZSBwbGFjZWhvbGRlclxuICAgICAgICBzaWduYXR1cmUgKz0gQnVmZmVyXG4gICAgICAgICAgICAuZnJvbShTdHJpbmcuZnJvbUNoYXJDb2RlKDApLnJlcGVhdCgocGxhY2Vob2xkZXJMZW5ndGggLyAyKSAtIHJhdy5sZW5ndGgpKVxuICAgICAgICAgICAgLnRvU3RyaW5nKCdoZXgnKTtcblxuICAgICAgICAvLyBQbGFjZSBpdCBpbiB0aGUgZG9jdW1lbnQuXG4gICAgICAgIHBkZiA9IEJ1ZmZlci5jb25jYXQoW1xuICAgICAgICAgICAgcGRmLnNsaWNlKDAsIGJ5dGVSYW5nZVsxXSksXG4gICAgICAgICAgICBCdWZmZXIuZnJvbShgPCR7c2lnbmF0dXJlfT5gKSxcbiAgICAgICAgICAgIHBkZi5zbGljZShieXRlUmFuZ2VbMV0pLFxuICAgICAgICBdKTtcblxuICAgICAgICAvLyBNYWdpYy4gRG9uZS5cbiAgICAgICAgcmV0dXJuIHBkZjtcbiAgICB9XG59XG4iXX0=

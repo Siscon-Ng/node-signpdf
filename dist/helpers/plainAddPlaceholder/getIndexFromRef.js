@@ -1,29 +1,18 @@
 "use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _SignPdfError = _interopRequireDefault(require("../../SignPdfError"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
+Object.defineProperty(exports, "__esModule", { value: true });
+const SignPdfError_1 = require("../../SignPdfError");
 /**
- * @param {object} refTable
+ * @param {RefTable} refTable
  * @param {string} ref
  * @returns {number}
  */
-const getIndexFromRef = (refTable, ref) => {
-  let [index] = ref.split(' ');
-  index = parseInt(index);
-
-  if (!refTable.offsets.has(index)) {
-    throw new _SignPdfError.default(`Failed to locate object "${ref}".`, _SignPdfError.default.TYPE_PARSE);
-  }
-
-  return index;
-};
-
-var _default = getIndexFromRef;
-exports.default = _default;
+function getIndexFromRef(refTable, ref) {
+    let [indexStr] = ref.split(' ');
+    let index = parseInt(indexStr);
+    if (!refTable.offsets.has(index)) {
+        throw new SignPdfError_1.SignPdfError(`Failed to locate object "${ref}".`, SignPdfError_1.ERROR_TYPE_PARSE);
+    }
+    return index;
+}
+exports.getIndexFromRef = getIndexFromRef;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZ2V0SW5kZXhGcm9tUmVmLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vc3JjL2hlbHBlcnMvcGxhaW5BZGRQbGFjZWhvbGRlci9nZXRJbmRleEZyb21SZWYudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7QUFBQSxxREFBb0U7QUFHcEU7Ozs7R0FJRztBQUNILFNBQWdCLGVBQWUsQ0FBQyxRQUFrQixFQUFFLEdBQVc7SUFDM0QsSUFBSSxDQUFDLFFBQVEsQ0FBQyxHQUFHLEdBQUcsQ0FBQyxLQUFLLENBQUMsR0FBRyxDQUFDLENBQUM7SUFDaEMsSUFBSSxLQUFLLEdBQUcsUUFBUSxDQUFDLFFBQVEsQ0FBQyxDQUFDO0lBRS9CLElBQUksQ0FBQyxRQUFRLENBQUMsT0FBTyxDQUFDLEdBQUcsQ0FBQyxLQUFLLENBQUMsRUFBRTtRQUM5QixNQUFNLElBQUksMkJBQVksQ0FDbEIsNEJBQTRCLEdBQUcsSUFBSSxFQUNuQywrQkFBZ0IsQ0FDbkIsQ0FBQztLQUNMO0lBQ0QsT0FBTyxLQUFLLENBQUM7QUFDakIsQ0FBQztBQVhELDBDQVdDIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgRVJST1JfVFlQRV9QQVJTRSwgU2lnblBkZkVycm9yIH0gZnJvbSAnLi4vLi4vU2lnblBkZkVycm9yJztcbmltcG9ydCB7IFJlZlRhYmxlIH0gZnJvbSAnLi9yZWFkUmVmVGFibGUnO1xuXG4vKipcbiAqIEBwYXJhbSB7UmVmVGFibGV9IHJlZlRhYmxlXG4gKiBAcGFyYW0ge3N0cmluZ30gcmVmXG4gKiBAcmV0dXJucyB7bnVtYmVyfVxuICovXG5leHBvcnQgZnVuY3Rpb24gZ2V0SW5kZXhGcm9tUmVmKHJlZlRhYmxlOiBSZWZUYWJsZSwgcmVmOiBzdHJpbmcpOiBudW1iZXIge1xuICAgIGxldCBbaW5kZXhTdHJdID0gcmVmLnNwbGl0KCcgJyk7XG4gICAgbGV0IGluZGV4ID0gcGFyc2VJbnQoaW5kZXhTdHIpO1xuXG4gICAgaWYgKCFyZWZUYWJsZS5vZmZzZXRzLmhhcyhpbmRleCkpIHtcbiAgICAgICAgdGhyb3cgbmV3IFNpZ25QZGZFcnJvcihcbiAgICAgICAgICAgIGBGYWlsZWQgdG8gbG9jYXRlIG9iamVjdCBcIiR7cmVmfVwiLmAsXG4gICAgICAgICAgICBFUlJPUl9UWVBFX1BBUlNFLFxuICAgICAgICApO1xuICAgIH1cbiAgICByZXR1cm4gaW5kZXg7XG59XG4iXX0=

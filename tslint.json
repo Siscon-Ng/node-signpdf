@@ -1,0 +1,64 @@
+{
+    "defaultSeverity": "error",
+    "extends": [
+        "tslint:recommended"
+    ],
+    "linterOptions": {
+        "exclude": [
+            "node_modules/**",
+            "coverage/**"
+        ]
+    },
+    "rules": {
+        "quotemark": [
+            true,
+            "single",
+            "avoid-escape"
+        ],
+        "indent": [
+            true,
+            "spaces"
+        ],
+        "interface-name": false,
+        "ordered-imports": false,
+        "arrow-parens": false,
+        "object-literal-sort-keys": false,
+        "no-consecutive-blank-lines": false,
+        "curly": [
+            true,
+            "ignore-same-line"
+        ],
+        "prefer-const": false,
+        "no-console": [
+            true,
+            "log"
+        ],
+        "one-line": false,
+        "max-classes-per-file": false,
+        "ban-types": false,
+        "no-shadowed-variable": false,
+        "no-bitwise": false,
+        "object-literal-key-quotes": [
+            true,
+            "as-needed"
+        ],
+        "no-conditional-assignment": false,
+        "trailing-comma": false,
+        "radix": false
+    },
+    "jsRules": {
+        "quotemark": [
+            true,
+            "single",
+            "avoid-escape"
+        ],
+        "indent": [
+            true,
+            "tabs"
+        ],
+        "curly": [
+            true,
+            "ignore-same-line"
+        ]
+    }
+}

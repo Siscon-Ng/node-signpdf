@@ -1,21 +1,28 @@
 "use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-const createBufferTrailer = (pdf, info, addedReferences) => {
-  let rows = [];
-  rows[0] = '0000000000 65535 f '; // info.xref.tableRows[0];
-
-  addedReferences.forEach((offset, index) => {
-    const paddedOffset = `0000000000${offset}`.slice(-10);
-    rows[index + 1] = `${index} 1\n${paddedOffset} 00000 n `;
-  });
-  rows = rows.filter(row => row !== undefined);
-  return Buffer.concat([Buffer.from('xref\n'), Buffer.from(`${info.xref.startingIndex} 1\n`), Buffer.from(rows.join('\n')), Buffer.from('\ntrailer\n'), Buffer.from('<<\n'), Buffer.from(`/Size ${info.xref.maxIndex + 1}\n`), Buffer.from(`/Prev ${info.xRefPosition}\n`), Buffer.from(`/Root ${info.rootRef}\n`), Buffer.from('/Info 15 0 R\n'), Buffer.from('>>\n'), Buffer.from('startxref\n'), Buffer.from(`${pdf.length}\n`), Buffer.from('%%EOF')]);
-};
-
-var _default = createBufferTrailer;
-exports.default = _default;
+Object.defineProperty(exports, "__esModule", { value: true });
+function createBufferTrailer(pdf, info, addedReferences) {
+    let rows = [];
+    rows[0] = '0000000000 65535 f '; // info.xref.tableRows[0];
+    addedReferences.forEach((offset, index) => {
+        const paddedOffset = (`0000000000${offset}`).slice(-10);
+        rows[index + 1] = `${index} 1\n${paddedOffset} 00000 n `;
+    });
+    rows = rows.filter(row => row !== undefined);
+    return Buffer.concat([
+        Buffer.from('xref\n'),
+        Buffer.from(`${info.xref.startingIndex} 1\n`),
+        Buffer.from(rows.join('\n')),
+        Buffer.from('\ntrailer\n'),
+        Buffer.from('<<\n'),
+        Buffer.from(`/Size ${info.xref.maxIndex + 1}\n`),
+        Buffer.from(`/Prev ${info.xRefPosition}\n`),
+        Buffer.from(`/Root ${info.rootRef}\n`),
+        Buffer.from('/Info 15 0 R\n'),
+        Buffer.from('>>\n'),
+        Buffer.from('startxref\n'),
+        Buffer.from(`${pdf.length}\n`),
+        Buffer.from('%%EOF'),
+    ]);
+}
+exports.createBufferTrailer = createBufferTrailer;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiY3JlYXRlQnVmZmVyVHJhaWxlci5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9oZWxwZXJzL3BsYWluQWRkUGxhY2Vob2xkZXIvY3JlYXRlQnVmZmVyVHJhaWxlci50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOztBQUVBLFNBQWdCLG1CQUFtQixDQUFDLEdBQVcsRUFBRSxJQUFhLEVBQUUsZUFBb0M7SUFDaEcsSUFBSSxJQUFJLEdBQUcsRUFBRSxDQUFDO0lBQ2QsSUFBSSxDQUFDLENBQUMsQ0FBQyxHQUFHLHFCQUFxQixDQUFDLENBQUMsMEJBQTBCO0lBRTNELGVBQWUsQ0FBQyxPQUFPLENBQUMsQ0FBQyxNQUFNLEVBQUUsS0FBSyxFQUFFLEVBQUU7UUFDdEMsTUFBTSxZQUFZLEdBQUcsQ0FBQyxhQUFhLE1BQU0sRUFBRSxDQUFDLENBQUMsS0FBSyxDQUFDLENBQUMsRUFBRSxDQUFDLENBQUM7UUFDeEQsSUFBSSxDQUFDLEtBQUssR0FBRyxDQUFDLENBQUMsR0FBRyxHQUFHLEtBQUssT0FBTyxZQUFZLFdBQVcsQ0FBQztJQUM3RCxDQUFDLENBQUMsQ0FBQztJQUNILElBQUksR0FBRyxJQUFJLENBQUMsTUFBTSxDQUFDLEdBQUcsQ0FBQyxFQUFFLENBQUMsR0FBRyxLQUFLLFNBQVMsQ0FBQyxDQUFDO0lBRTdDLE9BQU8sTUFBTSxDQUFDLE1BQU0sQ0FBQztRQUNqQixNQUFNLENBQUMsSUFBSSxDQUFDLFFBQVEsQ0FBQztRQUNyQixNQUFNLENBQUMsSUFBSSxDQUFDLEdBQUcsSUFBSSxDQUFDLElBQUksQ0FBQyxhQUFhLE1BQU0sQ0FBQztRQUM3QyxNQUFNLENBQUMsSUFBSSxDQUFDLElBQUksQ0FBQyxJQUFJLENBQUMsSUFBSSxDQUFDLENBQUM7UUFDNUIsTUFBTSxDQUFDLElBQUksQ0FBQyxhQUFhLENBQUM7UUFDMUIsTUFBTSxDQUFDLElBQUksQ0FBQyxNQUFNLENBQUM7UUFDbkIsTUFBTSxDQUFDLElBQUksQ0FBQyxTQUFTLElBQUksQ0FBQyxJQUFJLENBQUMsUUFBUSxHQUFHLENBQUMsSUFBSSxDQUFDO1FBQ2hELE1BQU0sQ0FBQyxJQUFJLENBQUMsU0FBUyxJQUFJLENBQUMsWUFBWSxJQUFJLENBQUM7UUFDM0MsTUFBTSxDQUFDLElBQUksQ0FBQyxTQUFTLElBQUksQ0FBQyxPQUFPLElBQUksQ0FBQztRQUN0QyxNQUFNLENBQUMsSUFBSSxDQUFDLGdCQUFnQixDQUFDO1FBQzdCLE1BQU0sQ0FBQyxJQUFJLENBQUMsTUFBTSxDQUFDO1FBQ25CLE1BQU0sQ0FBQyxJQUFJLENBQUMsYUFBYSxDQUFDO1FBQzFCLE1BQU0sQ0FBQyxJQUFJLENBQUMsR0FBRyxHQUFHLENBQUMsTUFBTSxJQUFJLENBQUM7UUFDOUIsTUFBTSxDQUFDLElBQUksQ0FBQyxPQUFPLENBQUM7S0FDdkIsQ0FBQyxDQUFDO0FBQ1AsQ0FBQztBQXpCRCxrREF5QkMiLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBQZGZJbmZvIH0gZnJvbSAnLi9yZWFkUGRmJztcblxuZXhwb3J0IGZ1bmN0aW9uIGNyZWF0ZUJ1ZmZlclRyYWlsZXIocGRmOiBCdWZmZXIsIGluZm86IFBkZkluZm8sIGFkZGVkUmVmZXJlbmNlczogTWFwPG51bWJlciwgbnVtYmVyPik6IEJ1ZmZlciB7XG4gICAgbGV0IHJvd3MgPSBbXTtcbiAgICByb3dzWzBdID0gJzAwMDAwMDAwMDAgNjU1MzUgZiAnOyAvLyBpbmZvLnhyZWYudGFibGVSb3dzWzBdO1xuXG4gICAgYWRkZWRSZWZlcmVuY2VzLmZvckVhY2goKG9mZnNldCwgaW5kZXgpID0+IHtcbiAgICAgICAgY29uc3QgcGFkZGVkT2Zmc2V0ID0gKGAwMDAwMDAwMDAwJHtvZmZzZXR9YCkuc2xpY2UoLTEwKTtcbiAgICAgICAgcm93c1tpbmRleCArIDFdID0gYCR7aW5kZXh9IDFcXG4ke3BhZGRlZE9mZnNldH0gMDAwMDAgbiBgO1xuICAgIH0pO1xuICAgIHJvd3MgPSByb3dzLmZpbHRlcihyb3cgPT4gcm93ICE9PSB1bmRlZmluZWQpO1xuXG4gICAgcmV0dXJuIEJ1ZmZlci5jb25jYXQoW1xuICAgICAgICBCdWZmZXIuZnJvbSgneHJlZlxcbicpLFxuICAgICAgICBCdWZmZXIuZnJvbShgJHtpbmZvLnhyZWYuc3RhcnRpbmdJbmRleH0gMVxcbmApLFxuICAgICAgICBCdWZmZXIuZnJvbShyb3dzLmpvaW4oJ1xcbicpKSxcbiAgICAgICAgQnVmZmVyLmZyb20oJ1xcbnRyYWlsZXJcXG4nKSxcbiAgICAgICAgQnVmZmVyLmZyb20oJzw8XFxuJyksXG4gICAgICAgIEJ1ZmZlci5mcm9tKGAvU2l6ZSAke2luZm8ueHJlZi5tYXhJbmRleCArIDF9XFxuYCksXG4gICAgICAgIEJ1ZmZlci5mcm9tKGAvUHJldiAke2luZm8ueFJlZlBvc2l0aW9ufVxcbmApLFxuICAgICAgICBCdWZmZXIuZnJvbShgL1Jvb3QgJHtpbmZvLnJvb3RSZWZ9XFxuYCksXG4gICAgICAgIEJ1ZmZlci5mcm9tKCcvSW5mbyAxNSAwIFJcXG4nKSxcbiAgICAgICAgQnVmZmVyLmZyb20oJz4+XFxuJyksXG4gICAgICAgIEJ1ZmZlci5mcm9tKCdzdGFydHhyZWZcXG4nKSxcbiAgICAgICAgQnVmZmVyLmZyb20oYCR7cGRmLmxlbmd0aH1cXG5gKSxcbiAgICAgICAgQnVmZmVyLmZyb20oJyUlRU9GJyksXG4gICAgXSk7XG59XG4iXX0=
