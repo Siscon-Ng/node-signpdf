@@ -61,5 +61,8 @@
         "tslint": "^5.11.0",
         "tslint-eslint-rules": "^5.4.0",
         "typescript": "^3.7.2"
+    },
+    "dependencies": {
+        "pdf-lib": "^1.2.1"
     }
 }
