@@ -110,59 +110,60 @@ export async function pdflibAddPlaceholder(opts: PdflibAddPlaceholderOpts): Prom
         };
     }
 
-    const sigAppearanceStreamMapDict = new Map();
-    // const FontHelvetica = pdfDoc.embedStandardFont(StandardFonts.Helvetica)
-    // const resourcesMap = new Map()
-    // const fontMap = new Map()
-    // fontMap.set(PDFName.of('Helvetica'), FontHelvetica)
-    // resourcesMap.set(PDFName.Font, PDFDict.fromMapWithContext(fontMap, pdfDoc.context))
-    // sigAppearanceStreamMapDict.set(
-    //   PDFName.of('Resources'),
-    //   PDFDict.fromMapWithContext(resourcesMap, pdfDoc.context)
-    // )
-    sigAppearanceStreamMapDict.set(PDFName.Type, PDFName.XObject);
-    sigAppearanceStreamMapDict.set(PDFName.of('Subtype'), PDFName.of('Form'));
-
-    // Define a content stream that defines how the signature field should appear
-    // on the PDF. - Table 95 of the PDF specification.
-    const sigAppearanceStream = PDFContentStream.of(
-        PDFDict.fromMapWithContext(sigAppearanceStreamMapDict, pdfDoc.context),
-        drawRectangle({
-            x: PDFNumber.of(infoSignature.positionBBox.left),
-            y: PDFNumber.of(infoSignature.positionBBox.bottom),
-            width: PDFNumber.of(infoSignature.positionBBox.right),
-            height: PDFNumber.of(infoSignature.positionBBox.top),
-            color: rgb(0.95, 0.95, 0.95),
-            borderWidth: 3,
-            borderColor: rgb(0, 0, 0),
-            rotate: degrees(0),
-            xSkew: degrees(0),
-            ySkew: degrees(0)
-        })
-    );
-    drawText(PDFHexString.of(info), {
-        x: PDFNumber.of(10),
-        y: PDFNumber.of(15),
-        font: 'Helvetica',
-        size: PDFNumber.of(15),
-        color: rgb(0.5, 0.5, 0.5),
-        rotate: degrees(0),
-        xSkew: degrees(0),
-        ySkew: degrees(0)
-    }).forEach(x => { sigAppearanceStream.push(x); });
-    drawRectangle({
-        x: PDFNumber.of(4),
-        y: PDFNumber.of(4),
-        width: PDFNumber.of(192),
-        height: PDFNumber.of(2),
-        color: rgb(0.5, 0.5, 0.5),
-        rotate: degrees(0),
-        borderWidth: 0,
-        borderColor: rgb(0, 0, 0),
-        xSkew: degrees(0),
-        ySkew: degrees(0)
-    }).forEach(x => { sigAppearanceStream.push(x); });
-    const sigAppearanceStreamRef = pdfDoc.context.register(sigAppearanceStream);
+    // FIXME DISABLED - produces corrupted PDF
+    // const sigAppearanceStreamMapDict = new Map();
+    // // const FontHelvetica = pdfDoc.embedStandardFont(StandardFonts.Helvetica)
+    // // const resourcesMap = new Map()
+    // // const fontMap = new Map()
+    // // fontMap.set(PDFName.of('Helvetica'), FontHelvetica)
+    // // resourcesMap.set(PDFName.Font, PDFDict.fromMapWithContext(fontMap, pdfDoc.context))
+    // // sigAppearanceStreamMapDict.set(
+    // //   PDFName.of('Resources'),
+    // //   PDFDict.fromMapWithContext(resourcesMap, pdfDoc.context)
+    // // )
+    // sigAppearanceStreamMapDict.set(PDFName.Type, PDFName.XObject);
+    // sigAppearanceStreamMapDict.set(PDFName.of('Subtype'), PDFName.of('Form'));
+    //
+    // // Define a content stream that defines how the signature field should appear
+    // // on the PDF. - Table 95 of the PDF specification.
+    // const sigAppearanceStream = PDFContentStream.of(
+    //     PDFDict.fromMapWithContext(sigAppearanceStreamMapDict, pdfDoc.context),
+    //     drawRectangle({
+    //         x: PDFNumber.of(infoSignature.positionBBox.left),
+    //         y: PDFNumber.of(infoSignature.positionBBox.bottom),
+    //         width: PDFNumber.of(infoSignature.positionBBox.right),
+    //         height: PDFNumber.of(infoSignature.positionBBox.top),
+    //         color: rgb(0.95, 0.95, 0.95),
+    //         borderWidth: 3,
+    //         borderColor: rgb(0, 0, 0),
+    //         rotate: degrees(0),
+    //         xSkew: degrees(0),
+    //         ySkew: degrees(0)
+    //     })
+    // );
+    // drawText(PDFHexString.of(info), {
+    //     x: PDFNumber.of(10),
+    //     y: PDFNumber.of(15),
+    //     font: 'Helvetica',
+    //     size: PDFNumber.of(15),
+    //     color: rgb(0.5, 0.5, 0.5),
+    //     rotate: degrees(0),
+    //     xSkew: degrees(0),
+    //     ySkew: degrees(0)
+    // }).forEach(x => { sigAppearanceStream.push(x); });
+    // drawRectangle({
+    //     x: PDFNumber.of(4),
+    //     y: PDFNumber.of(4),
+    //     width: PDFNumber.of(192),
+    //     height: PDFNumber.of(2),
+    //     color: rgb(0.5, 0.5, 0.5),
+    //     rotate: degrees(0),
+    //     borderWidth: 0,
+    //     borderColor: rgb(0, 0, 0),
+    //     xSkew: degrees(0),
+    //     ySkew: degrees(0)
+    // }).forEach(x => { sigAppearanceStream.push(x); });
+    // const sigAppearanceStreamRef = pdfDoc.context.register(sigAppearanceStream);
 
     // Define the signature widget annotation - Table 164
     const widgetDictMap = new Map();
@@ -172,7 +173,7 @@ export async function pdflibAddPlaceholder(opts: PdflibAddPlaceholderOpts): Prom
     arrayRect.push(PDFNumber.of(50));
     arrayRect.push(PDFNumber.of(300));
     arrayRect.push(PDFNumber.of(100));
-    APMap.set(PDFName.of('N'), sigAppearanceStreamRef);
+    // APMap.set(PDFName.of('N'), sigAppearanceStreamRef);
 
     widgetDictMap.set(PDFName.Type, PDFName.of('Annot'));
     widgetDictMap.set(PDFName.of('Subtype'), PDFName.of('Widget'));
